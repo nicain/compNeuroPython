@@ -542,7 +542,7 @@ def meanRTFCCoh(Coh, thetaList):
 	
 #-------------------------------------------------------------------------------
 	
-def psychoChrono(thetaList, saveResults=1):
+def psychoChrono(thetaList, saveResults=1, verbose=1):
 
 	CohListStr = ["0.0","3.2","6.4","12.8","25.6","51.2"]
 	CohList = [float(Coh) for Coh in CohListStr]
@@ -554,7 +554,8 @@ def psychoChrono(thetaList, saveResults=1):
 		for Coh in CohList:
 			thetaCohDict[theta, Coh] = [0,0,0]
 	for UUID in UUIDList:
-		print "Processing UUID " + UUID
+		if verbose == 1:
+			print "Processing UUID " + UUID
 		f = findFileName(["thresholdTest",UUID], N=1)[0]
 		fSetting = findFileName([".ntf",UUID], N=1)[0]
 		currCoh = float(getSettings(fSetting)[0])
@@ -584,18 +585,18 @@ def psychoChrono(thetaList, saveResults=1):
 	
 #-------------------------------------------------------------------------------
 
-def thresholdTestDir(thetaList):
+def thresholdTestDir(thetaList, verbose=1):
 	
 	UUIDList = getUUIDList(dir="./")
 	
 	for UUID in UUIDList:
-		thresholdTestUUID(UUID, thetaList)
+		thresholdTestUUID(UUID, thetaList, verbose=verbose)
 	return
 		
 		
 #-------------------------------------------------------------------------------
 	
-def thresholdTestUUID(UUID, thetaList):
+def thresholdTestUUID(UUID, thetaList, verbose=1):
 	saveString = "thresholdTest_" + UUID
 	for theta in thetaList:
 		saveString += "_" + str(theta)
@@ -603,8 +604,8 @@ def thresholdTestUUID(UUID, thetaList):
 	
 	if os.path.isfile(fileName):
 		thetaList, RTList, FCList = tripleListFromFile(fileName)
-
-		print "UUID " + UUID + " loaded."
+		if verbose
+			print "UUID " + UUID + " loaded."
 	else:
 	
 		GESel1FileName = findFileName([UUID, ".fr", "GESel1"])[0]
@@ -621,8 +622,8 @@ def thresholdTestUUID(UUID, thetaList):
 		RTList, FCList = firstCrossing([t1,y1], [t2,y2], thetaList)
 		
 		tripleListToFile(thetaList, RTList, FCList, fileName)
-		
-		print "UUID " + UUID + " tested and saved."
+		if verbose:
+			print "UUID " + UUID + " tested and saved."
 	return RTList, FCList
 
 #-------------------------------------------------------------------------------
