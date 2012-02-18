@@ -575,6 +575,8 @@ def psychoChrono(thetaList, saveResults=1):
 			psyChrDict[theta][1].append(thetaCohDict[theta, Coh][0]/thetaCohDict[theta, Coh][2])
 			psyChrDict[theta][2].append(thetaCohDict[theta, Coh][1]/thetaCohDict[theta, Coh][2])
 			
+	print "total sims: " + str(thetaCohDict[theta, Coh][2])
+
 	pt.pickle(psyChrDict,"../psychoChronoAnalysis.dat")
 
 	
