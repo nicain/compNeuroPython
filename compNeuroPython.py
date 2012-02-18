@@ -604,7 +604,7 @@ def thresholdTestUUID(UUID, thetaList, verbose=1):
 	
 	if os.path.isfile(fileName):
 		thetaList, RTList, FCList = tripleListFromFile(fileName)
-		if verbose::
+		if verbose:
 			print "UUID " + UUID + " loaded."
 	else:
 	
