@@ -610,8 +610,17 @@ def thresholdTestUUID(UUID, thetaList, verbose=1):
 	
 		if verbose:
 			print "Testing UUID: " + UUID
-		GESel1FileName = findFileName([UUID, ".fr", "GESel1"])[0]
-		GESel2FileName = findFileName([UUID, ".fr", "GESel2"])[0]
+        
+		try:
+			GESel1FileName = findFileName([UUID, ".fr", "GESel1"])[0]
+			GESel2FileName = findFileName([UUID, ".fr", "GESel2"])[0]
+		catch IndexError:
+			CNP.ntfToFRFile(findFileName([UUID, ".ntf", "GESel1"]))
+			GESel1FileName = findFileName([UUID, ".fr", "GESel1"])[0]
+                
+			CNP.ntfToFRFile(findFileName([UUID, ".ntf", "GESel2"]))
+			GESel1FileName = findFileName([UUID, ".fr", "GESel2"])[0]
+    
 						
 		t1,y1 = doubleListFromFile(GESel1FileName)
 		t2,y2 = doubleListFromFile(GESel2FileName)
