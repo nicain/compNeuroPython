@@ -608,6 +608,8 @@ def thresholdTestUUID(UUID, thetaList, verbose=1):
 			print "UUID " + UUID + " loaded."
 	else:
 	
+		if verbose:
+			print "Testing UUID: " + UUID
 		GESel1FileName = findFileName([UUID, ".fr", "GESel1"])[0]
 		GESel2FileName = findFileName([UUID, ".fr", "GESel2"])[0]
 						
@@ -707,7 +709,7 @@ def speedAccTradeoff(data, C, plotStyle='-', dots=True, highlightTheta=None, sub
 	
 	counter = 0
 	for theta in thetaVals:
-		RT[counter] = data[theta][1][CInd]
+		RT[counter] = 350 + data[theta][1][CInd]
 		FC[counter] = data[theta][2][CInd]
 		counter += 1
 	
