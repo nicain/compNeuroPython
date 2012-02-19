@@ -615,10 +615,10 @@ def thresholdTestUUID(UUID, thetaList, verbose=1):
 			GESel1FileName = findFileName([UUID, ".fr", "GESel1"])[0]
 			GESel2FileName = findFileName([UUID, ".fr", "GESel2"])[0]
 		except IndexError:
-			ntfToFRFile(findFileName([UUID, ".ntf", "GESel1"]))
+			ntfToFRFile(findFileName([UUID, ".ntf", "GESel1"])[0])
 			GESel1FileName = findFileName([UUID, ".fr", "GESel1"])[0]
                 
-			ntfToFRFile(findFileName([UUID, ".ntf", "GESel2"]))
+			ntfToFRFile(findFileName([UUID, ".ntf", "GESel2"])[0])
 			GESel1FileName = findFileName([UUID, ".fr", "GESel2"])[0]
     
 						
