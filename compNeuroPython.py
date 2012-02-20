@@ -725,7 +725,6 @@ def speedAccTradeoff(data, C, plotStyle='-', dots=True, highlightTheta=None, sub
         FC[counter] = data[theta][2][CInd]
         counter += 1
     
-    pl.figure(3)
     pl.plot(RT, FC, plotStyle)
     if dots == True:
         if subject == 'both':
