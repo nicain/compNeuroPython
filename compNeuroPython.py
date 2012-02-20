@@ -558,7 +558,7 @@ def psychoChrono(thetaList, saveResults=1, verbose=1):
     for UUID in UUIDList:
         UUIDcounter = UUIDcounter + 1
         if verbose == 1:
-            print "Processing UUID " + UUID + "  (" + str(UUIDCounter) + "/" + str(len(UUIDList)) + ")"
+            print "Processing UUID " + UUID + "  (" + str(UUIDcounter) + "/" + str(len(UUIDList)) + ")"
         f = findFileName(["thresholdTest",UUID], N=1)[0]
         fSetting = findFileName([".ntf",UUID], N=1,whichDir="../NTF")[0]
         currCoh = float(getSettings(fSetting)[0])
