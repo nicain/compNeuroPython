@@ -7,6 +7,13 @@ import os
 import numpy as np
 import pbsTools as pt
 import pylab as pl
+import time
+
+def tic():
+    return time.clock()
+
+def toc(timeIn):
+    print time.clock() - timeIn
 
 #-------------------------------------------------------------------------------
 
@@ -19,6 +26,39 @@ class NTL(object):
             data = []
         
         self.data = nameTimeListIn
+
+        self._whenSpiked = {}
+
+    def numberOfNeurons(self):
+
+        return len(set(zip(*self.data)[0]))
+
+    def getNameList(self):
+        
+        return set(zip(*self.data)[0])
+
+    def numberOfNeurons(self):
+    
+        return len(set(zip(*self.data)[0]))
+        
+    def getNeuronSpikeTimes(self, n):
+        
+        if not isinstance(n,str):
+            n = str(n)
+        
+        if n in self._whenSpiked.keys():
+            return self._whenSpiked[n]
+
+        spikeTimeList = []
+
+        for currN,currT in self.data:
+            if n == currN:
+                spikeTimeList.append(currT)
+
+        self._whenSpiked[n] = spikeTimeList
+
+        return spikeTimeList
+
         
 #-------------------------------------------------------------------------------
 
@@ -116,7 +156,7 @@ def firingRate(inputData,
                dt=1,
                xlabel='t',
                ylabel='Firing Rate'):
-        
+    
     if isinstance(inputData, NTL):
         spikeList = inputData
     else:
@@ -183,7 +223,8 @@ def firingRate(inputData,
 def firstCrossingSpikes(spikeList1, spikeList2, thetaList,
                window=50, 
                nameList='All', 
-               dt=1):
+               dt=1,
+                        tOn=0):
     
     # Get Firing Rate Data:
     ytVals1 = firingRate(spikeList1, window=window, nameList=nameList, plotsOn=False,
@@ -191,39 +232,64 @@ def firstCrossingSpikes(spikeList1, spikeList2, thetaList,
     ytVals2 = firingRate(spikeList2, t=ytVals1[0], window=window, nameList=nameList, plotsOn=False,
                         dt=dt, xlabel='t', ylabel='Firing Rate')
     
-    return firstCrossing(ytVals1, ytVals2, thetaList)
+    return firstCrossing(ytVals1, ytVals2, thetaList, tOn=tOn)
     
 #-------------------------------------------------------------------------------
 
-def firstCrossing(ytVals1, ytVals2, thetaList):
+def firstCrossing(ytVals1, ytVals2, thetaList, tOn = 0):
                
     if not isinstance(thetaList,list):
         thetaList = [thetaList]
     thetaList.sort()
     
     # Get Firing Rate Data:
-    tVals, yVals1 = ytVals1
-    tVals, yVals2 = ytVals2
+    tVals1, yVals1 = ytVals1
+    tVals2, yVals2 = ytVals2
+
+
+    if tOn == 0:
+        startingInd1 = 0
+        startingInd2 = 0
+    else:
+        startingInd1 = np.nonzero(np.array(tVals1)<tOn)[0][-1] + 1
+        startingInd2 = np.nonzero(np.array(tVals2)<tOn)[0][-1] + 1
+
+    tVals1 = tVals1[startingInd1:]
+    tVals2 = tVals2[startingInd2:]
+    yVals1 = yVals1[startingInd1:]
+    yVals2 = yVals2[startingInd2:]
+
+    t1i = 0
+    t2i = 0
+    currTime = min(tVals1[t1i], tVals2[t2i])
+    FCList = []
+    RTList = []
     
-    # Walk the time indices, and report first crossing:
-    thetaInd = 0
-    resultList = [-1]*len(thetaList)
-    crossTimeList = [float("inf")]*len(thetaList)
-    for i in range(len(tVals)):
-        if yVals1[i] > thetaList[thetaInd] or yVals2[i] > thetaList[thetaInd]:
-            if yVals1[i] > yVals2[i]:
-                resultList[thetaInd]=1
+    for theta in thetaList:
+        try:
+            while yVals1[t1i] < theta and yVals2[t2i] < theta:
+                if tVals1[t1i] < tVals2[t2i]:
+                    currTime = tVals1[t1i]
+                    t1i += 1
+                
+                else:
+                    currTime = tVals2[t2i]
+                    t2i += 1
+                                
+            if yVals1[t1i] >= theta:
+                FCList.append(1)
             else:
-                resultList[thetaInd]=0
-            crossTimeList[thetaInd]=tVals[i]
-            if thetaInd < len(thetaList)-1:
-                thetaInd += 1
-            else:
-                break
+                FCList.append(0)
+            RTList.append(currTime)
+        
+        except:
+            FCList.append(-1)
+            RTList.append(float("inf"))
+
                 
 
     
-    return crossTimeList, resultList
+    return RTList, FCList
     
             
 #-------------------------------------------------------------------------------
@@ -371,7 +437,7 @@ def doubleListToFile(L1, L2, fileName):
         
 #-------------------------------------------------------------------------------
         
-def doubleListFromFile(fileName):
+def doubleListFromFile(fileName, isFloat=False):
     
     f = open(fileName, 'r')
     L1 = []
@@ -384,6 +450,10 @@ def doubleListFromFile(fileName):
                 a,b = line.split("\t")
                 L1.append(a)
                 L2.append(b)
+    
+        if isFloat==True:
+            L1 = np.array(map(float,L1))
+            L2 = np.array(map(float,L2))
             
         return L1, L2
     except:
@@ -408,7 +478,7 @@ def tripleListToFile(L1, L2, L3, fileName):
     
 #-------------------------------------------------------------------------------
 
-def tripleListFromFile(fileName):
+def tripleListFromFile(fileName, isFloat=False):
     
     f = open(fileName, 'r')
     L1 = []
@@ -423,6 +493,11 @@ def tripleListFromFile(fileName):
                 L1.append(a)
                 L2.append(b)
                 L3.append(c)
+
+        if isFloat==True:
+            L1 = np.array(map(float,L1))
+            L2 = np.array(map(float,L2))
+            L3 = np.array(map(float,L3))
             
         return L1, L2, L3
     except:
@@ -588,22 +663,20 @@ def psychoChrono(thetaList, saveResults=1, verbose=1):
     
 #-------------------------------------------------------------------------------
 
-def thresholdTestDir(thetaList, verbose=1):
+def thresholdTestDir(thetaList, verbose=1, tOn = 0):
     
     UUIDList = getUUIDList(dir="./")
     
     for UUID in UUIDList:
-        thresholdTestUUID(UUID, thetaList, verbose=verbose)
+        thresholdTestUUID(UUID, thetaList, verbose=verbose, tOn=tOn)
     return
         
         
 #-------------------------------------------------------------------------------
     
-def thresholdTestUUID(UUID, thetaList, verbose=1):
-    saveString = "thresholdTest_" + UUID
-    for theta in thetaList:
-        saveString += "_" + str(theta)
-    fileName = saveString + ".dat"
+def thresholdTestUUID(UUID, thetaList, verbose=1, tOn = 0):
+    
+    fileName = "thresholdTestFR_" + UUID + ".dat"
     
     if os.path.isfile(fileName):
         thetaList, RTList, FCList = tripleListFromFile(fileName)
@@ -612,7 +685,7 @@ def thresholdTestUUID(UUID, thetaList, verbose=1):
     else:
     
         if verbose:
-            print "Testing UUID: " + UUID
+            print "Testing UUID (firing rate): " + UUID
         
         try:
             GESel1FileName = findFileName([UUID, ".fr", "GESel1"])[0]
@@ -632,13 +705,292 @@ def thresholdTestUUID(UUID, thetaList, verbose=1):
         t2 = [float(val) for val in t2]
         y1 = [float(val) for val in y1]
         y2 = [float(val) for val in y2]
+
         
-        RTList, FCList = firstCrossing([t1,y1], [t2,y2], thetaList)
+
+        RTList, FCList = firstCrossing([t1,y1], [t2,y2], thetaList, tOn=tOn)
         
         tripleListToFile(thetaList, RTList, FCList, fileName)
         if verbose:
             print "UUID " + UUID + " tested and saved."
     return RTList, FCList
+
+#-------------------------------------------------------------------------------
+
+def thresholdTestSpikesUUID(UUID, thetaList, verbose=1, tOn = 0):
+    
+    fileName = "thresholdTestSpikes_" + UUID + ".dat"
+
+    if os.path.isfile(fileName):
+        thetaList, RTList, FCList = tripleListFromFile(fileName)
+        if verbose:
+            print "UUID " + UUID + " loaded."
+    else:
+        
+        if verbose:
+            print "Testing UUID (spikes): " + UUID
+        
+        GESel1FileName = findFileName([UUID, ".ntf", "GESel1"])[0]
+        GESel2FileName = findFileName([UUID, ".ntf", "GESel2"])[0]
+        who1,t1 = doubleListFromFile(GESel1FileName)
+        who2,t2 = doubleListFromFile(GESel2FileName)
+
+
+        t1 = [float(val) for val in t1]
+        t2 = [float(val) for val in t2]
+
+        spikeCounter = 0
+        t1i = 0
+        t2i = 0
+        currTime = 0
+        FCList = []
+        RTList = []
+        spikeCounter = 0
+        for theta in thetaList:
+
+            try:
+                while abs(spikeCounter) < theta:
+                    if t1[t1i] < t2[t2i]:
+                        currTime = t1[t1i]
+                        t1i += 1
+                        if currTime > tOn:
+                            spikeCounter += 1
+                    
+                    else:
+                        currTime = t2[t2i]
+                        t2i += 1
+                        if currTime > tOn:
+                            spikeCounter -= 1
+                    
+                if spikeCounter >= theta:
+                    FCList.append(1)
+                else:
+                    FCList.append(0)
+                RTList.append(currTime)
+
+            except:
+                FCList.append(-1)
+                RTList.append(float("inf"))
+        
+        tripleListToFile(thetaList, RTList, FCList, fileName)
+        if verbose:
+            print "UUID " + UUID + " tested and saved."
+    return RTList, FCList
+
+
+#-------------------------------------------------------------------------------
+
+def thresholdTestSpikesBGTooUUID(UUID, thetaList, verbose=1, tOn = 0):
+    
+    fileName = "thresholdTestSpikesBGToo_" + UUID + ".dat"
+    
+    if os.path.isfile(fileName):
+        thetaList, RTList, FCList = tripleListFromFile(fileName)
+        if verbose:
+            print "UUID " + UUID + " loaded."
+    else:
+        
+        if verbose:
+            print "Testing UUID (spikes, BG): " + UUID
+        
+        GESel1FileName = findFileName([UUID, ".ntf", "GESel1"])[0]
+        GESel2FileName = findFileName([UUID, ".ntf", "GESel2"])[0]
+        BGESel1FileName = findFileName([UUID, ".ntf", "BGESel1"])[0]
+        BGESel2FileName = findFileName([UUID, ".ntf", "BGESel2"])[0]
+        who1,t1 = doubleListFromFile(GESel1FileName)
+        who2,t2 = doubleListFromFile(GESel2FileName)
+        whoBG1,tBG1 = doubleListFromFile(GESel1FileName)
+        whoBG2,tBG2 = doubleListFromFile(GESel2FileName)
+        
+        t1 = [float(val) for val in t1]
+        t2 = [float(val) for val in t2]
+        tBG1 = [float(val) for val in tBG1]
+        tBG2 = [float(val) for val in tBG2]
+        
+        t1i = 0
+        t2i = 0
+        tBG1i = 0
+        tBG2i = 0
+        currTime = 0
+        FCList = []
+        RTList = []
+            
+        myTime = tic()
+        spikeCounter = 0        
+        for theta in thetaList:
+
+#            sHist = [0]
+#            tHist = [0]
+            try:
+                while abs(spikeCounter) < theta:
+                    currTime = min(t1[t1i], t2[t2i], tBG1[tBG1i], tBG2[tBG2i])
+                    if currTime == t1[t1i]:
+                        t1i += 1
+                        if currTime > tOn:
+                            spikeCounter += 1
+                    elif currTime == t2[t2i]:
+                        t2i += 1
+                        if currTime > tOn:
+                            spikeCounter -= 1
+                    elif currTime == tBG1[tBG1i]:
+                        tBG1i += 1
+                        if currTime > tOn:
+                            spikeCounter += 1
+                    else:
+                        tBG2i += 1
+                        if currTime > tOn:
+                            spikeCounter -= 1
+#                    tHist.append(currTime)
+#                    sHist.append(spikeCounter)
+                    
+                
+                if spikeCounter >= theta:
+                    FCList.append(1)
+                else:
+                    FCList.append(0)
+                RTList.append(currTime)
+            
+            except:
+                FCList.append(-1)
+                RTList.append(float("inf"))
+
+        toc(myTime)
+        
+        tripleListToFile(thetaList, RTList, FCList, fileName)
+        if verbose:
+            print "UUID " + UUID + " tested and saved."
+    return RTList, FCList
+#    return tHist, sHist
+
+#-------------------------------------------------------------------------------
+def thresholdTestCurrentUUID(UUID, thetaList, verbose=1, tOn = 0):
+    
+    fileName = "thresholdTestCurrent_" + UUID + ".dat"
+    
+    if os.path.isfile(fileName):
+        thetaList, RTList, FCList = tripleListFromFile(fileName)
+        if verbose:
+            print "UUID " + UUID + " loaded."
+    else:
+        
+        if verbose:
+            print "Testing UUID (current): " + UUID
+
+        GESel1FileName = findFileName([UUID, ".dat", "GESel1PoolInput"])[0]
+        GESel2FileName = findFileName([UUID, ".dat", "GESel2PoolInput"])[0]
+        t1,x1 = doubleListFromFile(GESel1FileName, isFloat=True)
+        t2,x2 = doubleListFromFile(GESel2FileName, isFloat=True)
+
+        y1 = -x1.cumsum()
+        y2 = -x2.cumsum()
+        
+        if tOn == 0:
+            ti = 0
+        else:
+            ti = np.nonzero(np.array(t1)<tOn)[0][-1] + 1
+
+        currTime = 0
+        FCList = []
+        RTList = []
+
+        for theta in thetaList:
+            
+            try:
+                while y1[ti] < theta and y2[ti] < theta:
+                    ti += 1
+                
+                if y1[ti] >= theta:
+                    FCList.append(1)
+                else:
+                    FCList.append(0)
+                RTList.append(t1[ti])
+            
+            except:
+                FCList.append(-1)
+                RTList.append(float("inf"))
+        
+        tripleListToFile(thetaList, RTList, FCList, fileName)
+        if verbose:
+            print "UUID " + UUID + " tested and saved."
+    return RTList, FCList
+
+
+#-------------------------------------------------------------------------------
+def thresholdTestCurrentBGTooUUID(UUID, thetaList, verbose=1, tOn = 0):
+    
+    fileName = "thresholdTestCurrentBGToo_" + UUID + ".dat"
+    
+    if os.path.isfile(fileName):
+        thetaList, RTList, FCList = tripleListFromFile(fileName)
+        if verbose:
+            print "UUID " + UUID + " loaded."
+    else:
+        
+        if verbose:
+            print "Testing UUID (current BG): " + UUID
+        
+        GESel1FileName = findFileName([UUID, ".dat", "GESel1PoolInput"])[0]
+        GESel2FileName = findFileName([UUID, ".dat", "GESel2PoolInput"])[0]
+        GESel1BGFileName = findFileName([UUID, ".dat", "GESel1PoolBG"])[0]
+        GESel2BGFileName = findFileName([UUID, ".dat", "GESel2PoolBG"])[0]
+        t1,x1 = doubleListFromFile(GESel1FileName, isFloat=True)
+        t2,x2 = doubleListFromFile(GESel2FileName, isFloat=True)
+        tBG1,xBG1 = doubleListFromFile(GESel1BGFileName, isFloat=True)
+        tBG2,xBG2 = doubleListFromFile(GESel2BGFileName, isFloat=True)
+        
+        x1 += xBG1
+        x2 += xBG2
+
+        y1 = -x1.cumsum()
+        y2 = -x2.cumsum()
+        
+        if tOn == 0:
+            ti = 0
+        else:
+            ti = np.nonzero(np.array(t1)<tOn)[0][-1] + 1
+        
+        currTime = 0
+        FCList = []
+        RTList = []
+        
+        for theta in thetaList:
+            
+            try:
+                while y1[ti] < theta and y2[ti] < theta:
+                    ti += 1
+                
+                if y1[ti] >= theta:
+                    FCList.append(1)
+                else:
+                    FCList.append(0)
+                RTList.append(t1[ti])
+            
+            except:
+                FCList.append(-1)
+                RTList.append(float("inf"))
+        
+        tripleListToFile(thetaList, RTList, FCList, fileName)
+        if verbose:
+            print "UUID " + UUID + " tested and saved."
+    return RTList, FCList
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #-------------------------------------------------------------------------------
 
@@ -648,7 +1000,30 @@ def getRoitmanData(subject='n'):
     if subject == 'both':
         CohValsB, RTValsB, FCValsB, CohDictB = getRoitmanData(subject='b')
         CohValsN, RTValsN, FCValsN, CohDictN = getRoitmanData(subject='n')
-        return CohValsB[0], [RTValsB[0], RTValsN[0]], [FCValsB[0], FCValsN[0]], [CohDictB[0], CohDictN[0]]
+        
+
+        
+        CohVals = []
+        for i in range(len(CohValsB[0])):
+            CohVals.append((CohValsB[0][i] + CohValsN[0][i])/2)
+        
+        RTVals = []
+        for i in range(len(RTValsB[0])):
+            RTVals.append((RTValsB[0][i] + RTValsN[0][i])/2)
+                
+        FCVals = []
+        for i in range(len(FCValsB[0])):
+            FCVals.append((FCValsB[0][i] + FCValsN[0][i])/2)
+        
+        CohDict = {}
+        for key in CohDictB[0].keys():
+            CohDict[key] = [0,0]
+            for i in [0,1]:
+                CohDict[key][i] = (CohDictN[0][key][i]+CohDictB[0][key][i])/2
+
+
+
+        return [CohVals], [RTVals], [FCVals], [CohDict]
         
     elif subject == 'b':
         FCVals = [0.50462962962963, 0.615560640732265, 0.738532110091743, 0.93348623853211, 0.995412844036697, 1    ]
@@ -704,13 +1079,13 @@ def psychoChronoAnalysis(data, theta, plotStyle='-', dots=True, subject = 'n'):
     
 #-------------------------------------------------------------------------------
     
-def speedAccTradeoff(data, C, plotStyle='-', dots=True, highlightTheta=None, subject = 'n'):
+def speedAccTradeoff(data, C, plotStyle='-', dots=True, highlightTheta=None, subject = 'n', TND=350,thetaMin=1):
 
     thetaVals = data.keys()
     CVals = data[thetaVals[0]][0]
     CInd = CVals.index(C)
-    RT = [0]*len(thetaVals)
-    FC = [0]*len(thetaVals)
+    RT = []
+    FC = []
     
     if dots == True:
         CohVals, RTVals, FCVals, CohDict = getRoitmanData(subject=subject)
@@ -719,11 +1094,10 @@ def speedAccTradeoff(data, C, plotStyle='-', dots=True, highlightTheta=None, sub
         specialThetaRT = data[highlightTheta][1][CInd]
         specialThetaFC = data[highlightTheta][2][CInd]
     
-    counter = 0
     for theta in thetaVals:
-        RT[counter] = 350 + data[theta][1][CInd]
-        FC[counter] = data[theta][2][CInd]
-        counter += 1
+        if theta >= thetaMin:
+            RT.append(TND + data[theta][1][CInd])
+            FC.append(data[theta][2][CInd])
     
     pl.plot(RT, FC, plotStyle)
     if dots == True:
@@ -737,15 +1111,17 @@ def speedAccTradeoff(data, C, plotStyle='-', dots=True, highlightTheta=None, sub
     if not highlightTheta == None:
         pl.plot([specialThetaRT], [specialThetaFC],'b.')
     pl.ylim([.49,1.01])
+
+    return RT,FC
     
 #-------------------------------------------------------------------------------
         
-def speedAccTradeoffFull(data, plotStyle='-', dots=True, highlightTheta=None, subject = 'n'):
+def speedAccTradeoffFull(data, plotStyle='-', dots=True, highlightTheta=None, subject = 'n',TND=350,thetaMin=1):
 
     CohVals = [0, 3.2, 6.4, 12.8, 25.6, 51.2]
     
     for CohVal in CohVals:
-        speedAccTradeoff(data, CohVal, plotStyle=plotStyle, dots=dots, highlightTheta=highlightTheta, subject=subject)
+        speedAccTradeoff(data, CohVal, plotStyle=plotStyle, dots=dots, highlightTheta=highlightTheta, subject=subject, TND=TND,thetaMin=thetaMin)
     
 #-------------------------------------------------------------------------------
     
@@ -821,18 +1197,54 @@ def stripUUIDAndSettingsDir(dir="./", verbose=True):
     return    
 
 #-------------------------------------------------------------------------------
-
 def plotFR(filename,plotstyle = '-', figure=1):
 
     if isType(filename,'fr'):
         t,y = doubleListFromFile(filename)
         pl.figure(figure)
         pl.plot(t,y,plotstyle)
+    elif isType(filename,'ntf'):
+        data = getDataFromFile(filename)
+        t,y = firingRate(data, 
+                         t=None,
+                         window=50, 
+                         nameList='All', 
+                         plotsOn=False, 
+                         dt=1,
+                         xlabel='t',
+                         ylabel='Firing Rate')
+        pl.plot(t,y,plotstyle)
+
+
+    return 0
+
+#-------------------------------------------------------------------------------
+def plotPhaseSpace(filename1,filename2,plotstyle = '-', figure=1):
+    
+    if isType(filename1,'fr'):
+        t1,y1 = doubleListFromFile(filename1)
+        
+    if isType(filename2,'fr'):
+        t2,y2 = doubleListFromFile(filename2)
+        
+        
+        
+        pl.figure(figure)
+        pl.plot(y1[0:len(y1)],y2[0:len(y1)],plotstyle)
     
     return 0
 
 #-------------------------------------------------------------------------------
+def plotFRUUID(UUID,plotstyle = '-', figure=1):
+    
+    fileNameList = findFileName([".fr",UUID])
+    
+    for f in fileNameList:
+        plotFR(f,plotstyle = plotstyle, figure=figure)
+    
+    return 0
 
+#-------------------------------------------------------------------------------
 def FDReproduceTestUUID(UUID):
 
     fileName = "FDReproduceTest_" + UUID + ".dat"
@@ -965,7 +1377,7 @@ def rasterPlot(fileName):
 #-------------------------------------------------------------------------------
 def speedAccTradeoffSpikeIntUnCorr(C, N=240, r0 = 40, bP = .4, bN = .4, 
                                      dots = True, thetaMax=15, RTMax = 900,
-                                     plotStyle='-', TND=350):
+                                     plotStyle='-', TND=350, highlightTheta=False):
 
     from math import log
     
@@ -979,13 +1391,18 @@ def speedAccTradeoffSpikeIntUnCorr(C, N=240, r0 = 40, bP = .4, bN = .4,
 
     if dots == True:
         plotDots(C, subject='both', RTMin = TND, RTMax = RTMax)
+    
+    if highlightTheta != False:
+        FCSpecial = FCvsTheta([highlightTheta],h0,Ez)
+        RTSpecial = RTvsTheta([highlightTheta],h0,Ez,TND=TND)
+        pl.plot(RTSpecial,FCSpecial,'*')
 
     return
 
 #-------------------------------------------------------------------------------
 def speedAccTradeoffSPRTUnCorr(C, N=240, r0 = 40, bP = .4, bN = .4, 
                                      dots = True, thetaMax=15, RTMax = 900,
-                                     plotStyle='-', TND=350):
+                                     plotStyle='-', TND=350, highlightTheta=False, makePlot=True, thetaN=10):
     
     from math import log
     
@@ -995,17 +1412,31 @@ def speedAccTradeoffSPRTUnCorr(C, N=240, r0 = 40, bP = .4, bN = .4,
     h0 = -1
     Ez = N*(rP-rN)*log(rP/rN)
     
-    SpeedAccTradeoffExact(h0, Ez, thetaMax, RTMax=RTMax, TND=TND, plotStyle = plotStyle)
+    if makePlot == True:
     
-    if dots == True:
-        plotDots(C, subject='both', RTMin = TND, RTMax = RTMax)
-    
-    return
+        SpeedAccTradeoffExact(h0, Ez, thetaMax, RTMax=RTMax, TND=TND, plotStyle = plotStyle)
+        
+        if dots == True:
+            plotDots(C, subject='both', RTMin = TND, RTMax = RTMax)
+        
+        if highlightTheta != False:
+            FCSpecial = FCvsTheta([highlightTheta],h0,Ez)
+            RTSpecial = RTvsTheta([highlightTheta],h0,Ez,TND=TND)
+            pl.plot(RTSpecial,FCSpecial,'*')
+        
+        return
+
+    else:
+        theta = pl.linspace(.01, thetaMax, thetaN)
+        return theta, RTvsTheta(theta,h0,Ez,TND=TND), FCvsTheta(theta,h0,Ez)
 
 #-------------------------------------------------------------------------------
 def speedAccTradeoffSpikeIntSIP(C, corr, N=240, r0 = 40, bP = .4, bN = .4, 
-                               dots = True, thetaMax=15, RTMax = 900,
-                               plotStyle='-', TND=350):
+                                dots = True, thetaMax=15, thetaN=10,
+                                RTMax = 900,
+                                plotStyle='-', TND=350, makePlot = True, 
+                                quickName = False,
+                                whichRun = 0, saveResultDir = './savedResults'):
     
     from math import log
     from math import exp
@@ -1015,24 +1446,42 @@ def speedAccTradeoffSpikeIntSIP(C, corr, N=240, r0 = 40, bP = .4, bN = .4,
     rN = (r0 - bN*C)
     
     def phi(t):
-        return (1-corr)*(exp(t)-1)*N*rP + corr*rP*(exp(-N*t)-1) + (1-corr)*(exp(-t)-1)*N*rN + corr*rN*(exp(N*t)-1)
+        return (1-corr)*(exp(t)-1)*N*rP + corr*rP*(exp(N*t)-1) + (1-corr)*(exp(-t)-1)*N*rN + corr*rN*(exp(-N*t)-1)
     
     
+    
+    h0 = bisect(phi, -2,-.000001)
+    Ez = N*(rP-rN)
+    
+    if makePlot == True:
+        SpeedAccTradeoffExact(h0, Ez, thetaMax, RTMax=RTMax, TND=TND, plotStyle = plotStyle)
+        if dots == True:
+            plotDots(C, subject='both', RTMin = TND, RTMax = RTMax)
+    else:
+        if quickName == False:
+            theta = pl.linspace(.01, thetaMax, thetaN)
+            return theta, RTvsTheta(theta,h0,Ez,TND=TND), FCvsTheta(theta,h0,Ez)
+        else:
+            import analysisTools as at
+            theta, overshootP, overshootN = at.overshootCorrection(
+                                                                   {'XVar':'theta','N':N,'dt':.1,'corr':corr,'rP':rP,'rN':rN},
+                                                                   saveResultDir = saveResultDir, 
+                                                                   quickName = quickName, 
+                                                                   whichRun = whichRun)
+            
+            return theta, overshootP, overshootN, RTvsTheta(theta+overshootP,h0,Ez,TND=TND), FCvsTheta(theta+overshootP,h0,Ez)
 
-    h0 = bisect(phi, -1,-.0001)
-    Ez = N*(1 - 2*corr)*(rP-rN)
-    
-    SpeedAccTradeoffExact(h0, Ez, thetaMax, RTMax=RTMax, TND=TND, plotStyle = plotStyle)
-    
-    if dots == True:
-        plotDots(C, subject='both', RTMin = TND, RTMax = RTMax)
-    
+#            return theta, overshootP, overshootN, RTvsThetaOvershoot(theta,overshootP,overshootN,h0,Ez,TND=TND), FCvsThetaOvershoot(theta,overshootP,overshootN,h0,Ez)
+
     return
 
 #-------------------------------------------------------------------------------
 def speedAccTradeoffSPRTSIP(C, corr, N=240, r0 = 40, bP = .4, bN = .4, 
-                                dots = True, thetaMax=15, RTMax = 900,
-                                plotStyle='-', TND=350):
+                                dots = True, thetaMax=15, thetaN=10,
+                                RTMax = 900,
+                                plotStyle='-', TND=350, makePlot = True, 
+                                quickName = False,
+                                whichRun = 0, saveResultDir = './savedResults'):
     
     from math import log
     
@@ -1040,19 +1489,40 @@ def speedAccTradeoffSPRTSIP(C, corr, N=240, r0 = 40, bP = .4, bN = .4,
     rN = (r0 - bN*C)
     
     h0 = -1
-    Ez = (corr+N*(1-corr))*(rN*log(rN/rP) + rP*log(rP/rN))
+    Ez = (corr+N*(1-corr))*(rN*log(rN*1.0/rP) + rP*log(rP*1.0/rN))
     
-    SpeedAccTradeoffExact(h0, Ez, thetaMax, RTMax=RTMax, TND=TND, plotStyle = plotStyle)
+#    print corr, h0, Ez
     
-    if dots == True:
-        plotDots(C, subject='both', RTMin = TND, RTMax = RTMax)
+    if makePlot == True:
+        SpeedAccTradeoffExact(h0, Ez, thetaMax, RTMax=RTMax, TND=TND, plotStyle = plotStyle)
+        if dots == True:
+            plotDots(C, subject='both', RTMin = TND, RTMax = RTMax)
+    else:
+        if quickName == False:
+            theta = list(np.arange(0,thetaMax,np.log(rP/rN)))[1:]
+#            theta = pl.linspace(.01, thetaMax, thetaN)
+            return theta, RTvsTheta(theta,h0,Ez,TND=TND), FCvsTheta(theta,h0,Ez)
+        else:
+            import analysisTools as at
+            theta, overshootP, overshootN = at.overshootCorrection(
+                    {'XVar':'theta','N':N,'dt':.1,'corr':corr,'rP':rP,'rN':rN},
+                     saveResultDir = saveResultDir, 
+                     quickName = quickName, 
+                     whichRun = whichRun)
+            
+            
+            
+            return theta, overshootP, overshootN, RTvsTheta(theta+np.mean(overshootP),h0,Ez,TND=TND), FCvsTheta(theta+np.mean(overshootP),h0,Ez)
     
     return
 
 #-------------------------------------------------------------------------------
 def speedAccTradeoffSpikeIntMIP(C, corr, N=240, r0 = 40, bP = .4, bN = .4, 
-                                dots = True, thetaMax=15, RTMax = 900,
-                                plotStyle='-', TND=350):
+                                dots = True, thetaMax=15, thetaN=10,
+                                RTMax = 900,
+                                plotStyle='-', TND=350, makePlot = True, 
+                                quickName = False,
+                                whichRun = 0, saveResultDir = './savedResults'):
     
     from math import exp
     from scipy.optimize import bisect
@@ -1063,22 +1533,39 @@ def speedAccTradeoffSpikeIntMIP(C, corr, N=240, r0 = 40, bP = .4, bN = .4,
     def phi(t):
         return 1/corr*( rN*((1+corr*(exp(-t)-1))**N-1)  +  rP*((1+corr*(exp(t)-1))**N-1) )
     
-    
-    
     h0 = bisect(phi, -1,-.0001)
     Ez = N*(rP-rN)
-    
-    SpeedAccTradeoffExact(h0, Ez, thetaMax, RTMax=RTMax, TND=TND, plotStyle = plotStyle)
-    
-    if dots == True:
-        plotDots(C, subject='both', RTMin = TND, RTMax = RTMax)
+
+    if makePlot == True:
+        SpeedAccTradeoffExact(h0, Ez, thetaMax, RTMax=RTMax, TND=TND, plotStyle = plotStyle)
+        if dots == True:
+            plotDots(C, subject='both', RTMin = TND, RTMax = RTMax)
+    else:
+        
+        if quickName == False:
+            theta = pl.linspace(.01, thetaMax, thetaN)
+            return theta, RTvsTheta(theta,h0,Ez,TND=TND), FCvsTheta(theta,h0,Ez)
+        else:
+            import analysisTools as at
+            theta, overshootP, overshootN = at.overshootCorrection(
+                                                                   {'XVar':'theta','N':N,'dt':.1,'corr':corr,'rP':rP,'rN':rN},
+                                                                   saveResultDir = saveResultDir, 
+                                                                   quickName = quickName, 
+                                                                   whichRun = whichRun)
+            
+            print np.mean(overshootP)
+            
+            return theta, overshootP, overshootN, RTvsTheta(theta+overshootP,h0,Ez,TND=TND), FCvsTheta(theta+overshootP,h0,Ez)
     
     return
 
 #-------------------------------------------------------------------------------
 def speedAccTradeoffSPRTMIP(C, corr, N=240, r0 = 40, bP = .4, bN = .4, 
-                            dots = True, thetaMax=15, RTMax = 900,
-                            plotStyle='-', TND=350):
+                            dots = True, thetaMax=15, thetaN=10,
+                            RTMax = 900,
+                            plotStyle='-', TND=350, makePlot = True, 
+                            quickName = False,
+                            whichRun = 0, saveResultDir = './savedResults'):
     
     from math import log
     
@@ -1088,10 +1575,27 @@ def speedAccTradeoffSPRTMIP(C, corr, N=240, r0 = 40, bP = .4, bN = .4,
     h0 = -1
     Ez = (1-(1-corr)**N)/corr*(rN*log(rN/rP) + rP*log(rP/rN))
     
-    SpeedAccTradeoffExact(h0, Ez, thetaMax, RTMax=RTMax, TND=TND, plotStyle = plotStyle)
+#    print corr, h0, Ez
     
-    if dots == True:
-        plotDots(C, subject='both', RTMin = TND, RTMax = RTMax)
+    if makePlot == True:
+        SpeedAccTradeoffExact(h0, Ez, thetaMax, RTMax=RTMax, TND=TND, plotStyle = plotStyle)
+        if dots == True:
+            plotDots(C, subject='both', RTMin = TND, RTMax = RTMax)
+    else:
+        
+        if quickName == False:
+            theta = pl.linspace(.01, thetaMax, thetaN)
+#            theta = list(np.arange(0,thetaMax,np.log(rP/rN)))[1:]
+            return theta, RTvsTheta(theta,h0,Ez,TND=TND), FCvsTheta(theta,h0,Ez)
+        else:
+            import analysisTools as at
+            theta, overshootP, overshootN = at.overshootCorrection(
+                                                                   {'XVar':'theta','N':N,'dt':.1,'corr':corr,'rP':rP,'rN':rN},
+                                                                   saveResultDir = saveResultDir, 
+                                                                   quickName = quickName, 
+                                                                   whichRun = whichRun)
+            
+            return theta, overshootP, overshootN, RTvsTheta(theta+overshootP,h0,Ez,TND=TND), FCvsTheta(theta+overshootP,h0,Ez)
     
     return
 
@@ -1117,6 +1621,38 @@ def RTvsTheta(theta,h0,Ez, TND=350):
     
     return RT
 
+##-------------------------------------------------------------------------------
+def FCvsThetaOvershoot(theta,overshootP,overshootN,h0,Ez):
+    
+    from math import exp
+    
+    print theta,overshootP,overshootN
+    
+    FC = [0]*len(theta)
+    for i in range(len(FC)):
+        FC[i] = 1 - (exp(h0*(theta[i]+overshootP[i])) - 1)/(exp(h0*(theta[i]+overshootP[i]))-exp(h0*(-theta[i]+overshootN[i])))
+    
+#    print FC
+    
+    return FC
+
+#-------------------------------------------------------------------------------
+def RTvsThetaOvershoot(theta,overshootP,overshootN,h0,Ez, TND=350):
+    
+    from math import tanh
+    
+#    print theta,overshootP,overshootN
+    
+    FC = FCvsThetaOvershoot(theta,overshootP,overshootN,h0,Ez)
+    
+    RT = [0]*len(theta)
+    for i in range(len(RT)):
+        RT[i] = TND + ((theta[i]+overshootP[i])*(FC[i])+(-theta[i]+overshootN[i])*(1-FC[i]))/Ez*1000
+    
+#    print RT
+    
+    return RT
+
 #-------------------------------------------------------------------------------
 def SpeedAccTradeoffExact(h0, Ez, thetaMax, RTMax=900, TND=350, plotStyle = 'b-'):
 
@@ -1126,8 +1662,11 @@ def SpeedAccTradeoffExact(h0, Ez, thetaMax, RTMax=900, TND=350, plotStyle = 'b-'
     RTMin = TND
     
     theta = pl.linspace(0,thetaMax, 1000)
-
-    pl.plot(RTvsTheta(theta,h0,Ez,TND=TND), FCvsTheta(theta,h0,Ez), plotStyle)
+    
+    pl.plot(RTvsTheta(theta,h0,Ez,TND=TND), FCvsTheta(theta,h0,Ez))
+    
+    print theta[-1], RTvsTheta(theta,h0,Ez,TND=TND)[-1], FCvsTheta(theta,h0,Ez)[-1]
+    
     pl.xlim([RTMin, RTMax])
     pl.ylim([FCMin, FCMax])
 
@@ -1153,6 +1692,25 @@ def plotDots(C, subject='both', RTMin = 350, RTMax = 900):
 
 
 
+#-------------------------------------------------------------------------------
+def speedAccTradeoffSPRTUnCorrBGToo(C, BGRate=2400, N=240, r0 = 40, bP = .4, bN = .4, 
+                               dots = True, thetaMax=15, RTMax = 900,
+                               plotStyle='-', TND=350):
+    
+    from math import log
+    
+    rP = BGRate + (r0 + bP*C)
+    rN = BGRate + (r0 - bN*C)
+    
+    h0 = -1
+    Ez = N*(rP-rN)*log(rP/rN)
+    
+    SpeedAccTradeoffExact(h0, Ez, thetaMax, RTMax=RTMax, TND=TND, plotStyle = plotStyle)
+    
+    if dots == True:
+        plotDots(C, subject='both', RTMin = TND, RTMax = RTMax)
+    
+    return
 
 
 
