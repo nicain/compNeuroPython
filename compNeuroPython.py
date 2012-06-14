@@ -578,7 +578,7 @@ def findFileName(substringList, N=100000000,whichDir="./"):
     validFileNames = []
     for f in dirList(whichDir):
         if all(map(f.count, substringList)):
-            validFileNames.append(f)
+            validFileNames.append(os.path.join(whichDir,f))
             if len(validFileNames) >= N:
                 break
             
@@ -721,7 +721,7 @@ def thresholdTestSpikesUUID(UUID, thetaList, verbose=1, tOn = 0):
     
     fileName = "thresholdTestSpikes_" + UUID + ".dat"
 
-    if os.path.isfile(fileName):
+    if False:#os.path.isfile(fileName):
         thetaList, RTList, FCList = tripleListFromFile(fileName)
         if verbose:
             print "UUID " + UUID + " loaded."
@@ -730,8 +730,8 @@ def thresholdTestSpikesUUID(UUID, thetaList, verbose=1, tOn = 0):
         if verbose:
             print "Testing UUID (spikes): " + UUID
         
-        GESel1FileName = findFileName([UUID, ".ntf", "GESel1"])[0]
-        GESel2FileName = findFileName([UUID, ".ntf", "GESel2"])[0]
+        GESel1FileName = findFileName([UUID, ".ntf", "InputSel1"])[0]
+        GESel2FileName = findFileName([UUID, ".ntf", "InputSel2"])[0]
         who1,t1 = doubleListFromFile(GESel1FileName)
         who2,t2 = doubleListFromFile(GESel2FileName)
 
@@ -784,7 +784,7 @@ def thresholdTestSpikesBGTooUUID(UUID, thetaList, verbose=1, tOn = 0):
     
     fileName = "thresholdTestSpikesBGToo_" + UUID + ".dat"
     
-    if os.path.isfile(fileName):
+    if False:#os.path.isfile(fileName):
         thetaList, RTList, FCList = tripleListFromFile(fileName)
         if verbose:
             print "UUID " + UUID + " loaded."
@@ -793,8 +793,8 @@ def thresholdTestSpikesBGTooUUID(UUID, thetaList, verbose=1, tOn = 0):
         if verbose:
             print "Testing UUID (spikes, BG): " + UUID
         
-        GESel1FileName = findFileName([UUID, ".ntf", "GESel1"])[0]
-        GESel2FileName = findFileName([UUID, ".ntf", "GESel2"])[0]
+        GESel1FileName = findFileName([UUID, ".ntf", "InputSel1"])[0]
+        GESel2FileName = findFileName([UUID, ".ntf", "InputSel2"])[0]
         BGESel1FileName = findFileName([UUID, ".ntf", "BGESel1"])[0]
         BGESel2FileName = findFileName([UUID, ".ntf", "BGESel2"])[0]
         who1,t1 = doubleListFromFile(GESel1FileName)
