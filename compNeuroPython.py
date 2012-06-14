@@ -799,8 +799,8 @@ def thresholdTestSpikesBGTooUUID(UUID, thetaList, verbose=1, tOn = 0):
         BGESel2FileName = findFileName([UUID, ".ntf", "BGESel2"])[0]
         who1,t1 = doubleListFromFile(GESel1FileName)
         who2,t2 = doubleListFromFile(GESel2FileName)
-        whoBG1,tBG1 = doubleListFromFile(GESel1FileName)
-        whoBG2,tBG2 = doubleListFromFile(GESel2FileName)
+        whoBG1,tBG1 = doubleListFromFile(BGESel1FileName)
+        whoBG2,tBG2 = doubleListFromFile(BGESel2FileName)
         
         t1 = [float(val) for val in t1]
         t2 = [float(val) for val in t2]
@@ -818,9 +818,6 @@ def thresholdTestSpikesBGTooUUID(UUID, thetaList, verbose=1, tOn = 0):
         myTime = tic()
         spikeCounter = 0        
         for theta in thetaList:
-
-#            sHist = [0]
-#            tHist = [0]
             try:
                 while abs(spikeCounter) < theta:
                     currTime = min(t1[t1i], t2[t2i], tBG1[tBG1i], tBG2[tBG2i])
@@ -840,8 +837,6 @@ def thresholdTestSpikesBGTooUUID(UUID, thetaList, verbose=1, tOn = 0):
                         tBG2i += 1
                         if currTime > tOn:
                             spikeCounter -= 1
-#                    tHist.append(currTime)
-#                    sHist.append(spikeCounter)
                     
                 
                 if spikeCounter >= theta:
@@ -860,7 +855,6 @@ def thresholdTestSpikesBGTooUUID(UUID, thetaList, verbose=1, tOn = 0):
         if verbose:
             print "UUID " + UUID + " tested and saved."
     return RTList, FCList
-#    return tHist, sHist
 
 #-------------------------------------------------------------------------------
 def thresholdTestCurrentUUID(UUID, thetaList, verbose=1, tOn = 0):
