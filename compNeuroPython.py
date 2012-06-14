@@ -721,7 +721,7 @@ def thresholdTestSpikesUUID(UUID, thetaList, verbose=1, tOn = 0):
     
     fileName = "thresholdTestSpikes_" + UUID + ".dat"
 
-    if False:#os.path.isfile(fileName):
+    if os.path.isfile(fileName):
         thetaList, RTList, FCList = tripleListFromFile(fileName)
         if verbose:
             print "UUID " + UUID + " loaded."
@@ -784,7 +784,7 @@ def thresholdTestSpikesBGTooUUID(UUID, thetaList, verbose=1, tOn = 0):
     
     fileName = "thresholdTestSpikesBGToo_" + UUID + ".dat"
     
-    if False:#os.path.isfile(fileName):
+    if os.path.isfile(fileName):
         thetaList, RTList, FCList = tripleListFromFile(fileName)
         if verbose:
             print "UUID " + UUID + " loaded."
