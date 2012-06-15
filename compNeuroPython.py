@@ -869,6 +869,68 @@ def thresholdTestSpikesUUID(UUID, thetaList, verbose=1, tOn = 0):
             print "UUID " + UUID + " tested and saved."
     return RTList, FCList
 
+#-------------------------------------------------------------------------------
+
+def thresholdTestSpikesOutputUUID(UUID, thetaList, verbose=1, tOn = 0):
+    
+    fileName = "thresholdTestSpikesOutput_" + UUID + ".dat"
+    
+    if os.path.isfile(fileName):
+        thetaList, RTList, FCList = tripleListFromFile(fileName)
+        if verbose:
+            print "UUID " + UUID + " loaded."
+    else:
+        
+        if verbose:
+            print "Testing UUID (spikes): " + UUID
+        
+        GESel1FileName = findFileName([UUID, ".ntf", "GESel1"])[0]
+        GESel2FileName = findFileName([UUID, ".ntf", "GESel2"])[0]
+        who1,t1 = doubleListFromFile(GESel1FileName)
+        who2,t2 = doubleListFromFile(GESel2FileName)
+        
+        
+        t1 = [float(val) for val in t1]
+        t2 = [float(val) for val in t2]
+        
+        spikeCounter = 0
+        t1i = 0
+        t2i = 0
+        currTime = 0
+        FCList = []
+        RTList = []
+        spikeCounter = 0
+        for theta in thetaList:
+            
+            try:
+                while abs(spikeCounter) < theta:
+                    if t1[t1i] < t2[t2i]:
+                        currTime = t1[t1i]
+                        t1i += 1
+                        if currTime > tOn:
+                            spikeCounter += 1
+                    
+                    else:
+                        currTime = t2[t2i]
+                        t2i += 1
+                        if currTime > tOn:
+                            spikeCounter -= 1
+                
+                if spikeCounter >= theta:
+                    FCList.append(1)
+                else:
+                    FCList.append(0)
+                RTList.append(currTime)
+            
+            except:
+                FCList.append(-1)
+                RTList.append(float("inf"))
+        
+        tripleListToFile(thetaList, RTList, FCList, fileName)
+        if verbose:
+            print "UUID " + UUID + " tested and saved."
+    return RTList, FCList
+
 
 #-------------------------------------------------------------------------------
 
