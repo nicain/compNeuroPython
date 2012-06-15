@@ -888,7 +888,8 @@ def thresholdTestSpikesBGTooUUID(UUID, thetaList, verbose=1, tOn = 0, tau=100, b
     betaDict[0]=''
     betaDict[.01]='0.01'
     betaDict[.05]='0.05'
-    betaDict[.1]='0.1'
+    betaDict[.1]='0.10'
+    beta[1]='1.00'
     
     fileName = "thresholdTestSpikesBGToo" +betaDict[beta]+ "_" + UUID + ".dat"
     
