@@ -884,7 +884,13 @@ def thresholdTestSpikesUUID(UUID, thetaList, verbose=1, tOn = 0):
 
 def thresholdTestSpikesBGTooUUID(UUID, thetaList, verbose=1, tOn = 0, tau=100, beta=0):
     
-    fileName = "thresholdTestSpikesBGToo_" + UUID + ".dat"
+    betaDict = {}
+    betaDict[0]=''
+    betaDict[.01]='0.01'
+    betaDict[.05]='0.05'
+    betaDict[.1]='0.1'
+    
+    fileName = "thresholdTestSpikesBGToo" +betaDict[beta]+ "_" + UUID + ".dat"
     
     if os.path.isfile(fileName):
         thetaList, RTList, FCList = tripleListFromFile(fileName)
