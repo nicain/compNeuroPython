@@ -717,6 +717,98 @@ def thresholdTestUUID(UUID, thetaList, verbose=1, tOn = 0):
 
 #-------------------------------------------------------------------------------
 
+def thresholdTestUUIDDiff(UUID, thetaList, verbose=1, tOn = 0):
+    
+    fileName = "thresholdTestFRDiff_" + UUID + ".dat"
+    
+    if os.path.isfile(fileName):
+        thetaList, RTList, FCList = tripleListFromFile(fileName)
+        if verbose:
+            print "UUID " + UUID + " loaded."
+    else:
+        
+        if verbose:
+            print "Testing UUID (firing rate): " + UUID
+        
+        try:
+            GESel1FileName = findFileName([UUID, ".fr", "GESel1"])[0]
+            GESel2FileName = findFileName([UUID, ".fr", "GESel2"])[0]
+        except IndexError:
+            ntfToFRFile(findFileName([UUID, ".ntf", "GESel1"])[0])
+            GESel1FileName = findFileName([UUID, ".fr", "GESel1"])[0]
+            
+            ntfToFRFile(findFileName([UUID, ".ntf", "GESel2"])[0])
+            GESel2FileName = findFileName([UUID, ".fr", "GESel2"])[0]
+        
+        
+        t1,y1 = doubleListFromFile(GESel1FileName, isFloat=True)
+        t2,y2 = doubleListFromFile(GESel2FileName, isFloat=True)
+        
+        tMin = min(min(t1),min(t2)) 
+        tMax = max(max(t1),max(t2))
+        tLen = max(len(t1), len(t2))
+        t3 = np.linspace(tMin, tMax, tLen)
+    
+        y3 = np.zeros(len(t3))
+        for i in range(len(y3)):
+            currT = t3[i]
+            tmpInds = np.nonzero(t1<=currT)[0]
+            if len(tmpInds) == 0:
+                y1LInd = 0
+            else:
+                y1LInd = tmpInds[-1]
+            tmpInds = np.nonzero(t1>=currT)[0]
+            if len(tmpInds) == 0:
+                y1RInd = len(t1)-1
+            else:
+                y1RInd = tmpInds[0]
+
+            tmpInds = np.nonzero(t2<=currT)[0]
+            if len(tmpInds) == 0:
+                y2LInd = 0
+            else:
+                y2LInd = tmpInds[-1]
+            tmpInds = np.nonzero(t2>=currT)[0]
+            if len(tmpInds) == 0:
+                y2RInd = len(t2)-1
+            else:
+                y2RInd = tmpInds[0]
+                
+            y1Tmp = (y1[y1RInd]+y1[y1LInd])/2            
+            y2Tmp = (y2[y2RInd]+y2[y2LInd])/2
+                
+            y3[i] = y1Tmp - y2Tmp
+
+
+        y3i = np.nonzero(t3<tOn)[0][-1]
+        FCList = []
+        RTList = []
+        for theta in thetaList:
+            
+            try:
+
+                while abs(y3[y3i]) < theta:
+                    y3i += 1
+                
+                if y3[y3i] >= theta:
+                    FCList.append(1)
+                else:
+                    FCList.append(0)
+                RTList.append(t3[y3i])
+            
+            except:
+                FCList.append(-1)
+                RTList.append(float("inf"))
+
+        tripleListToFile(thetaList, RTList, FCList, fileName)
+        if verbose:
+            print "UUID " + UUID + " tested and saved."
+
+    return RTList, FCList
+
+
+#-------------------------------------------------------------------------------
+
 def thresholdTestSpikesUUID(UUID, thetaList, verbose=1, tOn = 0):
     
     fileName = "thresholdTestSpikes_" + UUID + ".dat"
