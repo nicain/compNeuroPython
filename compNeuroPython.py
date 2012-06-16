@@ -1080,6 +1080,145 @@ def thresholdTestCurrentBGTooUUID(UUID, thetaList, verbose=1, tOn = 0):
             print "UUID " + UUID + " tested and saved."
     return RTList, FCList
 
+#-------------------------------------------------------------------------------
+def splitCurrentAnalysisBG(UUID, thetaList, verbose=1, tBGOn=2000, tInputOn = 6000):
+    
+    fileName = "splitCurrentAnalysisBG_" + UUID + ".dat"
+    
+    if os.path.isfile(fileName):
+        thetaList, RTList, FCList = tripleListFromFile(fileName)
+        if verbose:
+            print "UUID " + UUID + " loaded."
+    else:
+        
+        if verbose:
+            print "Testing UUID (current BG): " + UUID
+        
+        GESel1FileName = findFileName([UUID, ".dat", "GESel1PoolInput"])[0]
+        GESel2FileName = findFileName([UUID, ".dat", "GESel2PoolInput"])[0]
+        GESel1BGFileName = findFileName([UUID, ".dat", "GESel1PoolBG"])[0]
+        GESel2BGFileName = findFileName([UUID, ".dat", "GESel2PoolBG"])[0]
+        
+        t1,x1 = doubleListFromFile(GESel1FileName, isFloat=True)
+        t2,x2 = doubleListFromFile(GESel2FileName, isFloat=True)
+        tBG1,xBG1 = doubleListFromFile(GESel1BGFileName, isFloat=True)
+        tBG2,xBG2 = doubleListFromFile(GESel2BGFileName, isFloat=True)
+        
+        tiInputOn = np.nonzero(np.array(t1)<tInputOn)[0][-1] + 1
+        tiBGOn = np.nonzero(np.array(t1)<tBGOn)[0][-1] + 1
+        
+        x1 = -x1[tiInputOn:]
+        x2 = -x2[tiInputOn:]
+        xBG1 = -xBG1[tiBGOn:(len(x1)+tiBGOn)]
+        xBG2 = -xBG2[tiBGOn:(len(x2)+tiBGOn)]
+        
+        
+        t3 = tBG1[0:len(xBG1)]
+        y3 = ((x1+xBG1)-(x2+xBG2)).cumsum()
+        
+        FCList = []
+        RTList = []
+        ti = 0
+        for theta in thetaList:
+            
+            try:
+                while abs(y3[ti]) < theta:
+                    ti += 1
+                
+                if y3[ti] >= theta:
+                    FCList.append(1)
+                else:
+                    FCList.append(0)
+                RTList.append(t3[ti])
+            
+            except:
+                FCList.append(-1)
+                RTList.append(float("inf"))
+        
+        tripleListToFile(thetaList, RTList, FCList, fileName)
+        if verbose:
+            print "UUID " + UUID + " tested and saved."
+    return RTList, FCList
+
+#-------------------------------------------------------------------------------
+def splitCurrentAnalysisAll(UUID, thetaList, verbose=1, tBGOn=2000, tInputOn = 6000):
+    
+    fileName = "splitCurrentAnalysisAll_" + UUID + ".dat"
+    
+    if os.path.isfile(fileName):
+        thetaList, RTList, FCList = tripleListFromFile(fileName)
+        if verbose:
+            print "UUID " + UUID + " loaded."
+    else:
+        
+        if verbose:
+            print "Testing UUID (current BG): " + UUID
+        
+        GESel1FileName = findFileName([UUID, ".dat", "GESel1PoolInput"])[0]
+        GESel2FileName = findFileName([UUID, ".dat", "GESel2PoolInput"])[0]
+        GESel1BGFileName = findFileName([UUID, ".dat", "GESel1PoolBG"])[0]
+        GESel2BGFileName = findFileName([UUID, ".dat", "GESel2PoolBG"])[0]
+        GESel1RecAMPAFileName = findFileName([UUID, ".dat", "GESel1PoolRecAMPA"])[0]
+        GESel2RecAMPAFileName = findFileName([UUID, ".dat", "GESel2PoolRecAMPA"])[0]
+        GESel1RecNMDAFileName = findFileName([UUID, ".dat", "GESel1PoolRecNMDA"])[0]
+        GESel2RecNMDAFileName = findFileName([UUID, ".dat", "GESel2PoolRecNMDA"])[0]
+        GESel1RecGABAFileName = findFileName([UUID, ".dat", "GESel1PoolRecGABA"])[0]
+        GESel2RecGABAFileName = findFileName([UUID, ".dat", "GESel2PoolRecGABA"])[0]
+
+        t1,x1 = doubleListFromFile(GESel1FileName, isFloat=True)
+        t2,x2 = doubleListFromFile(GESel2FileName, isFloat=True)
+        tBG1,xBG1 = doubleListFromFile(GESel1BGFileName, isFloat=True)
+        tBG2,xBG2 = doubleListFromFile(GESel2BGFileName, isFloat=True)
+        tAMPA1, xAMPA1 = doubleListFromFile(GESel1RecAMPAFileName, isFloat=True)
+        tAMPA2, xAMPA2 = doubleListFromFile(GESel2RecAMPAFileName, isFloat=True)
+        tNMDA1, xNDMA1 = doubleListFromFile(GESel1RecNMDAFileName, isFloat=True)
+        tNMDA2, xNDMA2 = doubleListFromFile(GESel2RecNMDAFileName, isFloat=True)
+        tGABA1, xGABA1 = doubleListFromFile(GESel1RecGABAFileName, isFloat=True)
+        tGABA2, xGABA2 = doubleListFromFile(GESel2RecGABAFileName, isFloat=True)
+
+        tiInputOn = np.nonzero(np.array(t1)<tInputOn)[0][-1] + 1
+        tiBGOn = np.nonzero(np.array(t1)<tBGOn)[0][-1] + 1
+        
+        x1 = -x1[tiInputOn:]
+        x2 = -x2[tiInputOn:]
+        xBG1 = -xBG1[tiBGOn:(len(x1)+tiBGOn)]
+        xBG2 = -xBG2[tiBGOn:(len(x2)+tiBGOn)]
+        xAMPA1 = -xAMPA1[tiBGOn:(len(x1)+tiBGOn)]
+        xAMPA2 = -xAMPA2[tiBGOn:(len(x1)+tiBGOn)]
+        xNDMA1 = -xNDMA1[tiBGOn:(len(x1)+tiBGOn)]
+        xNDMA2 = -xNDMA2[tiBGOn:(len(x1)+tiBGOn)]    
+        xGABA1 = -xGABA1[tiBGOn:(len(x1)+tiBGOn)]
+        xGABA2 = -xGABA2[tiBGOn:(len(x1)+tiBGOn)]
+
+
+        t3 = tBG1[0:len(xBG1)]
+        y3 = ((x1+xBG1+xAMPA1+xNDMA1+xGABA1)-(x2+xBG2+xAMPA2+xNDMA2+xGABA2)).cumsum()
+
+        FCList = []
+        RTList = []
+        ti = 0
+        for theta in thetaList:
+            
+            try:
+                while abs(y3[ti]) < theta:
+                    ti += 1
+                
+                if y3[ti] >= theta:
+                    FCList.append(1)
+                else:
+                    FCList.append(0)
+                RTList.append(t3[ti])
+            
+            except:
+                FCList.append(-1)
+                RTList.append(float("inf"))
+        
+        tripleListToFile(thetaList, RTList, FCList, fileName)
+        if verbose:
+            print "UUID " + UUID + " tested and saved."
+    return RTList, FCList
+
+
 
 ##-------------------------------------------------------------------------------
 #def thresholdTestCurrentUUID(UUID, thetaList, verbose=1, tOn = 0):
