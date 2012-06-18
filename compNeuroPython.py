@@ -822,6 +822,55 @@ def thresholdTestUUIDDiff(UUID, thetaList, verbose=1, tOn = 0):
 
     return RTList, FCList
 
+#-------------------------------------------------------------------------------
+
+def thresholdTestICUUID(UUID, thetaList, verbose=1, tOn = 0, FRDelta=.2):
+    
+    fileName = "thresholdTestFRIC_" + UUID + ".dat"
+    
+    if os.path.isfile(fileName):
+        thetaList, RTList, FCList = tripleListFromFile(fileName)
+        if verbose:
+            print "UUID " + UUID + " loaded."
+    else:
+        
+        if verbose:
+            print "Testing UUID (firing rate, delta): " + UUID
+        
+        try:
+            GESel1FileName = findFileName([UUID, ".fr", "GESel1"])[0]
+            GESel2FileName = findFileName([UUID, ".fr", "GESel2"])[0]
+        except IndexError:
+            ntfToFRFile(findFileName([UUID, ".ntf", "GESel1"])[0])
+            GESel1FileName = findFileName([UUID, ".fr", "GESel1"])[0]
+            
+            ntfToFRFile(findFileName([UUID, ".ntf", "GESel2"])[0])
+            GESel2FileName = findFileName([UUID, ".fr", "GESel2"])[0]
+        
+        
+        t1,y1 = doubleListFromFile(GESel1FileName, isFloat=True)
+        t2,y2 = doubleListFromFile(GESel2FileName, isFloat=True)
+        
+        ti1 = np.nonzero(np.array(t1)<tOn)[0][-1] + 1
+        ti2 = np.nonzero(np.array(t1)<tOn)[0][-1] + 1
+    
+        yDelta = abs(y1[ti1] - y2[ti2])
+        print yDelta, t1[ti1], t2[ti2], y1[ti1], y2[ti2]
+        if yDelta < FRDelta:
+        
+        
+            RTList, FCList = firstCrossing([t1,y1], [t2,y2], thetaList, tOn=tOn)
+            
+            tripleListToFile(thetaList, RTList, FCList, fileName)
+            if verbose:
+                print "UUID " + UUID + " tested and saved."
+            return RTList, FCList
+
+        else:
+
+            if verbose:
+                print "UUID " + UUID + " Rejected (deltaFR)."
+            return 0
 
 #-------------------------------------------------------------------------------
 
@@ -2198,9 +2247,42 @@ def speedAccTradeoffSPRTUnCorrBGToo(C, BGRate=2400, N=240, r0 = 40, bP = .4, bN 
     return
 
 
+#-------------------------------------------------------------------------------
+def loadAllCurrents(UUID):
+    
+    GESel1AllFileName = findFileName([UUID, ".dat", "GESel1DummyAll"])[0]
+    GESel2AllFileName = findFileName([UUID, ".dat", "GESel2DummyAll"])[0]
+    GESel1RecAMPAFileName = findFileName([UUID, ".dat", "GESel1DummyAMPA"])[0]
+    GESel2RecAMPAFileName = findFileName([UUID, ".dat", "GESel2DummyAMPA"])[0]
+    GESel1RecNMDAFileName = findFileName([UUID, ".dat", "GESel1DummyNMDA"])[0]
+    GESel2RecNMDAFileName = findFileName([UUID, ".dat", "GESel2DummyNMDA"])[0]
+    GESel1RecGABAFileName = findFileName([UUID, ".dat", "GESel1DummyGABA"])[0]
+    GESel2RecGABAFileName = findFileName([UUID, ".dat", "GESel2DummyGABA"])[0]
+    GESel1InputFileName = findFileName([UUID, ".dat", "GESel1DummyInput"])[0]
+    GESel2InputFileName = findFileName([UUID, ".dat", "GESel2DummyInput"])[0]
+    GESel1BGFileName = findFileName([UUID, ".dat", "GESel1DummyBG"])[0]
+    GESel2BGFileName = findFileName([UUID, ".dat", "GESel2DummyBG"])[0]
+    
+    t, All1 = doubleListFromFile(GESel1AllFileName, isFloat=True)
+    t, All2 = doubleListFromFile(GESel2AllFileName, isFloat=True)
+    t, xAMPA1 = doubleListFromFile(GESel1RecAMPAFileName, isFloat=True)
+    t, xAMPA2 = doubleListFromFile(GESel2RecAMPAFileName, isFloat=True)
+    t, xNMDA1 = doubleListFromFile(GESel1RecNMDAFileName, isFloat=True)
+    t, xNMDA2 = doubleListFromFile(GESel2RecNMDAFileName, isFloat=True)
+    t, xGABA1 = doubleListFromFile(GESel1RecGABAFileName, isFloat=True)
+    t, xGABA2 = doubleListFromFile(GESel2RecGABAFileName, isFloat=True)
+    t, xInput1 = doubleListFromFile(GESel1InputFileName, isFloat=True)
+    t, xInput2 = doubleListFromFile(GESel2InputFileName, isFloat=True)
+    t, xBG1 = doubleListFromFile(GESel1BGFileName, isFloat=True)
+    t, xBG2 = doubleListFromFile(GESel2BGFileName, isFloat=True)
 
-
-
+    return (t, 
+            (-All1, -All2),
+            (-xAMPA1,-xAMPA2),
+            (-xNMDA1,-xNMDA2),
+            (-xGABA1,-xGABA2),
+            (-xInput1, -xInput2),
+            (-xBG1, -xBG2))
 
 
 
