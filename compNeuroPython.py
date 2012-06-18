@@ -1225,12 +1225,12 @@ def splitCurrentAnalysisAll(UUID, thetaList, verbose=1, tBGOn=2000, tInputOn = 6
     return RTList, FCList
 
 #-------------------------------------------------------------------------------
-def totalSpikeDiffCompare(UUID, RTList, verbose=1, tOn = 2000):
+def totalSpikeDiffCompare(UUID, thetaList, verbose=1, tOn = 2000):
     
     fileName = "totalSpikeDiffCompare_" + UUID + ".dat"
     
     if os.path.isfile(fileName):
-        RTList, FCList = doubleListFromFile(fileName, isFloat=True)
+        thetaList, RTList, FCList = tripleListFromFile(fileName)
         if verbose:
             print "UUID " + UUID + " loaded."
     else:
@@ -1244,32 +1244,42 @@ def totalSpikeDiffCompare(UUID, RTList, verbose=1, tOn = 2000):
         who1,t1 = doubleListFromFile(GESel1FileName, isFloat=True)
         who2,t2 = doubleListFromFile(GESel2FileName, isFloat=True)
         
-        ti1On = np.nonzero(np.array(t1)<tOn)[0][-1] + 1
-        ti2On = np.nonzero(np.array(t1)<tOn)[0][-1] + 1
+    
+
+    
+        ti1 = np.nonzero(np.array(t1)<tOn)[0][-1] + 1
+        ti2 = np.nonzero(np.array(t2)<tOn)[0][-1] + 1
         
 
-        ti1Max = ti1On
-        ti2Max = ti2On
         FCList = []
-        for RT in RTList:
+        RTList = []
+        spikeCounter = 0
+        for theta in thetaList:
             
-            while t1[ti1Max] < RT and ti1Max < len(t1)-1:
-                ti1Max += 1
-            while t2[ti2Max] < RT and ti1Max < len(t2)-1:
-                ti2Max += 1
-            
-            if ti1Max == ti2Max:
-                if random.random() < .5:
-                    FCList.append(1)
+#            try:
+            while abs(spikeCounter) < theta:
+                print spikeCounter, theta, t1[ti1] , t2[ti2]
+                if t1[ti1] < t2[ti2]:
+                    currTime = t1[ti1]
+                    ti1 += 1
+                    spikeCounter += 1
+                
                 else:
-                    FCList.append(0)
-            elif ti1Max > ti2Max:
+                    currTime = t2[ti2]
+                    ti2 += 1
+                    spikeCounter -= 1
+            
+            if spikeCounter >= theta:
                 FCList.append(1)
             else:
                 FCList.append(0)
-            
+            RTList.append(currTime)
         
-        doubleListToFile(RTList, FCList, fileName)
+#            except:
+#            FCList.append(-1)
+#            RTList.append(float("inf"))    
+        
+        tripleListToFile(thetaList, RTList, FCList, fileName)
         if verbose:
             print "UUID " + UUID + " tested and saved."
     return RTList, FCList
