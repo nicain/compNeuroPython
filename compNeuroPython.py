@@ -1256,28 +1256,27 @@ def totalSpikeDiffCompare(UUID, thetaList, verbose=1, tOn = 2000):
         spikeCounter = 0
         for theta in thetaList:
             
-#            try:
-            while abs(spikeCounter) < theta:
-                print spikeCounter, theta, t1[ti1] , t2[ti2]
-                if t1[ti1] < t2[ti2]:
-                    currTime = t1[ti1]
-                    ti1 += 1
-                    spikeCounter += 1
+            try:
+                while abs(spikeCounter) < theta:
+                    if t1[ti1] < t2[ti2]:
+                        currTime = t1[ti1]
+                        ti1 += 1
+                        spikeCounter += 1
+                    
+                    else:
+                        currTime = t2[ti2]
+                        ti2 += 1
+                        spikeCounter -= 1
                 
+                if spikeCounter >= theta:
+                    FCList.append(1)
                 else:
-                    currTime = t2[ti2]
-                    ti2 += 1
-                    spikeCounter -= 1
-            
-            if spikeCounter >= theta:
-                FCList.append(1)
-            else:
-                FCList.append(0)
-            RTList.append(currTime)
+                    FCList.append(0)
+                RTList.append(currTime)
         
-#            except:
-#            FCList.append(-1)
-#            RTList.append(float("inf"))    
+            except:
+                FCList.append(-1)
+                RTList.append(float("inf"))    
         
         tripleListToFile(thetaList, RTList, FCList, fileName)
         if verbose:
