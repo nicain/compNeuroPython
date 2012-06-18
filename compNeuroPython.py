@@ -8,6 +8,7 @@ import numpy as np
 import pbsTools as pt
 import pylab as pl
 import time
+import random
 
 def tic():
     return time.clock()
@@ -285,8 +286,13 @@ def firstCrossing(ytVals1, ytVals2, thetaList, tOn = 0):
                 else:
                     currTime = tVals2[t2i]
                     t2i += 1
-                                
-            if yVals1[t1i] >= theta:
+                  
+            if yVals1[t1i] == theta and yVals2[t1i] == theta:
+                if random.random() < .5:
+                    FCList.append(1)
+                else:
+                    FCList.append(0)
+            elif yVals1[t1i] >= theta:
                 FCList.append(1)
             else:
                 FCList.append(0)
@@ -1218,7 +1224,55 @@ def splitCurrentAnalysisAll(UUID, thetaList, verbose=1, tBGOn=2000, tInputOn = 6
             print "UUID " + UUID + " tested and saved."
     return RTList, FCList
 
+#-------------------------------------------------------------------------------
+def totalSpikeDiffCompare(UUID, RTList, verbose=1, tOn = 2000):
+    
+    fileName = "totalSpikeDiffCompare_" + UUID + ".dat"
+    
+    if os.path.isfile(fileName):
+        RTList, FCList = doubleListFromFile(fileName, isFloat=True)
+        if verbose:
+            print "UUID " + UUID + " loaded."
+    else:
+        
+        if verbose:
+            print "Testing UUID (current BG): " + UUID
+        
+        GESel1FileName = findFileName([UUID, ".ntf", "GESel1Dummy"])[0]
+        GESel2FileName = findFileName([UUID, ".ntf", "GESel2Dummy"])[0]
+        
+        who1,t1 = doubleListFromFile(GESel1FileName, isFloat=True)
+        who2,t2 = doubleListFromFile(GESel2FileName, isFloat=True)
+        
+        ti1On = np.nonzero(np.array(t1)<tOn)[0][-1] + 1
+        ti2On = np.nonzero(np.array(t1)<tOn)[0][-1] + 1
+        
 
+        ti1Max = ti1On
+        ti2Max = ti2On
+        FCList = []
+        for RT in RTList:
+            
+            while t1[ti1Max] < RT and ti1Max < len(t1)-1:
+                ti1Max += 1
+            while t2[ti2Max] < RT and ti1Max < len(t2)-1:
+                ti2Max += 1
+            
+            if ti1Max == ti2Max:
+                if random.random() < .5:
+                    FCList.append(1)
+                else:
+                    FCList.append(0)
+            elif ti1Max > ti2Max:
+                FCList.append(1)
+            else:
+                FCList.append(0)
+            
+        
+        doubleListToFile(RTList, FCList, fileName)
+        if verbose:
+            print "UUID " + UUID + " tested and saved."
+    return RTList, FCList
 
 ##-------------------------------------------------------------------------------
 #def thresholdTestCurrentUUID(UUID, thetaList, verbose=1, tOn = 0):
@@ -1596,6 +1650,16 @@ def plotPhaseSpace(filename1,filename2,plotstyle = '-', figure=1):
 def plotFRUUID(UUID,plotstyle = '-', figure=1):
     
     fileNameList = findFileName([".fr",UUID])
+    
+    for f in fileNameList:
+        plotFR(f,plotstyle = plotstyle, figure=figure)
+    
+    return 0
+
+#-------------------------------------------------------------------------------
+def plotFRDir(whichDir="./", plotstyle = '-', figure=1):
+
+    fileNameList = findFileName([".fr"], whichDir=whichDir)
     
     for f in fileNameList:
         plotFR(f,plotstyle = plotstyle, figure=figure)
