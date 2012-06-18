@@ -1250,6 +1250,8 @@ def totalSpikeDiffCompare(UUID, thetaList, verbose=1, tOn = 2000):
         ti1 = np.nonzero(np.array(t1)<tOn)[0][-1] + 1
         ti2 = np.nonzero(np.array(t2)<tOn)[0][-1] + 1
         
+        print ti1, ti2
+        
 
         FCList = []
         RTList = []
@@ -1279,6 +1281,58 @@ def totalSpikeDiffCompare(UUID, thetaList, verbose=1, tOn = 2000):
                 RTList.append(float("inf"))    
         
         tripleListToFile(thetaList, RTList, FCList, fileName)
+        if verbose:
+            print "UUID " + UUID + " tested and saved."
+    return RTList, FCList
+
+#-------------------------------------------------------------------------------
+def totalSpikeIntCompare(UUID, RTList, verbose=1):
+    
+    fileName = "totalSpikeIntCompare_" + UUID + ".dat"
+    
+    if os.path.isfile(fileName):
+        RTList, FCList = doubleListFromFile(fileName)
+        if verbose:
+            print "UUID " + UUID + " loaded."
+    else:
+        
+        if verbose:
+            print "Testing UUID (current BG): " + UUID
+        
+        GESel1FileName = findFileName([UUID, ".ntf", "GESel1Dummy"])[0]
+        GESel2FileName = findFileName([UUID, ".ntf", "GESel2Dummy"])[0]
+        
+        who1,t1 = doubleListFromFile(GESel1FileName, isFloat=True)
+        who2,t2 = doubleListFromFile(GESel2FileName, isFloat=True)
+
+        tOn = RTList[0]
+        ti1 = np.nonzero(np.array(t1)<tOn)[0][-1] + 1
+        ti2 = np.nonzero(np.array(t2)<tOn)[0][-1] + 1
+        
+        FCList = []
+        spikeCounter1 = 0
+        spikeCounter2 = 0
+        for RT in RTList:
+            
+            while t1[ti1] < RT and ti1 < (len(t1)-1):
+                ti1 += 1
+                spikeCounter1 += 1
+                
+            while t2[ti2] < RT and ti2 < (len(t2)-1):
+                ti2 += 1
+                spikeCounter2 += 1
+                
+            if spikeCounter1 == spikeCounter2:
+                if random.random() < .5:
+                    FCList.append(1)
+                else:
+                    FCList.append(0)
+            elif spikeCounter1 > spikeCounter2:
+                FCList.append(1)
+            else:
+                FCList.append(0)
+        
+        doubleListToFile(RTList, FCList, fileName)
         if verbose:
             print "UUID " + UUID + " tested and saved."
     return RTList, FCList
