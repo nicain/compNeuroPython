@@ -2432,8 +2432,16 @@ def doubleOnTrials(dir="./", FRDelta=10):
     UUIDList = getUUIDList(dir=dir)
     
     nTrials = len(UUIDList)
+    
+    print nTrials
+    
     doubleOn = 0
+    counter = 0
     for UUID in UUIDList:
+        
+        counter  += 1
+        print counter, " (" + str(nTrials) + ")"
+        
         GESel1FileName = findFileName([UUID, ".fr", "GESel1"])[0]
         GESel2FileName = findFileName([UUID, ".fr", "GESel2"])[0]
         
