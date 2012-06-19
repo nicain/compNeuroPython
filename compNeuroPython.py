@@ -304,8 +304,9 @@ def firstCrossing(ytVals1, ytVals2, thetaList, tOn = 0):
             while y1New[ti] < theta and y2New[ti] < theta:
                 ti += 1
                 currTime = tNew[ti]
-                  
-            if y1New[ti] == theta and y2New[ti] == theta:
+               
+            print y1New[ti], y2New[ti]
+            if y1New[ti] >= theta and y2New[ti] >= theta:
                 if random.random() < .5:
                     FCList.append(1)
                 else:
