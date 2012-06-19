@@ -732,15 +732,8 @@ def thresholdTestUUID(UUID, thetaList, verbose=1, tOn = 0):
             GESel2FileName = findFileName([UUID, ".fr", "GESel2"])[0]
     
                         
-        t1,y1 = doubleListFromFile(GESel1FileName)
-        t2,y2 = doubleListFromFile(GESel2FileName)
-
-        t1 = [float(val) for val in t1]
-        t2 = [float(val) for val in t2]
-        y1 = [float(val) for val in y1]
-        y2 = [float(val) for val in y2]
-
-        
+        t1,y1 = doubleListFromFile(GESel1FileName, isFloat=True)
+        t2,y2 = doubleListFromFile(GESel2FileName, isFloat=True)       
 
         RTList, FCList = firstCrossing([t1,y1], [t2,y2], thetaList, tOn=tOn)
         
