@@ -2399,5 +2399,62 @@ def loadAllCurrents(UUID):
             (-xInput1, -xInput2),
             (-xBG1, -xBG2))
 
+#-------------------------------------------------------------------------------
+def plotFRSel1Sel2(UUID, figureInd=1):
+
+    GESel1FileName = findFileName([UUID, ".fr", "GESel1"])[0]
+    GESel2FileName = findFileName([UUID, ".fr", "GESel2"])[0]
+
+    t1, fr1 = doubleListFromFile(GESel1FileName, isFloat=True)
+    t2, fr2 = doubleListFromFile(GESel2FileName, isFloat=True)
+    
+    pl.figure(figureInd)
+    pl.plot(t1,fr1,'b')
+    pl.plot(t2,fr2,'g')
+
+#-------------------------------------------------------------------------------
+def plotFRSel1Sel2Dir(dir="./",  sameFigure=False):
+    
+    UUIDList = getUUIDList(dir=dir)
+    
+    print len(UUIDList)
+    
+    for i in range(len(UUIDList)):
+        if sameFigure == True:
+            plotFRSel1Sel2(UUIDList[i], figureInd=1)
+        else:
+            plotFRSel1Sel2(UUIDList[i], figureInd=i)
+
+
+#-------------------------------------------------------------------------------
+def doubleOnTrials(dir="./", FRDelta=10):
+    
+    UUIDList = getUUIDList(dir=dir)
+    
+    nTrials = len(UUIDList)
+    doubleOn = 0
+    for UUID in UUIDList:
+        GESel1FileName = findFileName([UUID, ".fr", "GESel1"])[0]
+        GESel2FileName = findFileName([UUID, ".fr", "GESel2"])[0]
+        
+        t1, fr1 = doubleListFromFile(GESel1FileName, isFloat=True)
+        t2, fr2 = doubleListFromFile(GESel2FileName, isFloat=True)
+
+        if abs(fr1[-1]-fr2[-1]) < FRDelta:
+            doubleOn += 1
+
+    return (doubleOn*1.0/(nTrials*1.0), doubleOn)
+
+
+
+
+
+
+
+
+
+
+
+
 
 
