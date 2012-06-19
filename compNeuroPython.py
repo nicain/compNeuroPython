@@ -254,45 +254,63 @@ def firstCrossing(ytVals1, ytVals2, thetaList, tOn = 0):
     thetaList.sort()
     
     # Get Firing Rate Data:
-    tVals1, yVals1 = ytVals1
-    tVals2, yVals2 = ytVals2
+    t1, y1 = ytVals1
+    t2, y2 = ytVals2
 
 
-    if tOn == 0:
-        startingInd1 = 0
-        startingInd2 = 0
-    else:
-        startingInd1 = np.nonzero(np.array(tVals1)<tOn)[0][-1] + 1
-        startingInd2 = np.nonzero(np.array(tVals2)<tOn)[0][-1] + 1
 
-    tVals1 = tVals1[startingInd1:]
-    tVals2 = tVals2[startingInd2:]
-    yVals1 = yVals1[startingInd1:]
-    yVals2 = yVals2[startingInd2:]
+    tMin = min(min(t1),min(t2)) 
+    tMax = max(max(t1),max(t2))
+    tLen = max(len(t1), len(t2))
+    tNew = np.linspace(tMin, tMax, tLen)
+    
+    y1New = np.zeros(len(tNew))
+    y2New = np.zeros(len(tNew))
+    for i in range(len(y1New)):
+        currT = tNew[i]
+        tmpInds = np.nonzero(t1<=currT)[0]
+        if len(tmpInds) == 0:
+            y1LInd = 0
+        else:
+            y1LInd = tmpInds[-1]
+        tmpInds = np.nonzero(t1>=currT)[0]
+        if len(tmpInds) == 0:
+            y1RInd = len(t1)-1
+        else:
+            y1RInd = tmpInds[0]
+        
+        tmpInds = np.nonzero(t2<=currT)[0]
+        if len(tmpInds) == 0:
+            y2LInd = 0
+        else:
+            y2LInd = tmpInds[-1]
+        tmpInds = np.nonzero(t2>=currT)[0]
+        if len(tmpInds) == 0:
+            y2RInd = len(t2)-1
+        else:
+            y2RInd = tmpInds[0]
+        
+        y1New[i] = (y1[y1RInd]+y1[y1LInd])/2            
+        y2New[i] = (y2[y2RInd]+y2[y2LInd])/2
 
-    t1i = 0
-    t2i = 0
-    currTime = min(tVals1[t1i], tVals2[t2i])
+
+
+    ti = np.nonzero(np.array(tNew)<tOn)[0][-1] + 1
+    currTime = tNew[ti]
     FCList = []
     RTList = []
-    
     for theta in thetaList:
         try:
-            while yVals1[t1i] < theta and yVals2[t2i] < theta:
-                if tVals1[t1i] < tVals2[t2i]:
-                    currTime = tVals1[t1i]
-                    t1i += 1
-                
-                else:
-                    currTime = tVals2[t2i]
-                    t2i += 1
+            while y1New[ti] < theta and y2New[ti] < theta:
+                ti += 1
+                currTime = tNew[ti]
                   
-            if yVals1[t1i] == theta and yVals2[t1i] == theta:
+            if y1New[ti] == theta and y2New[ti] == theta:
                 if random.random() < .5:
                     FCList.append(1)
                 else:
                     FCList.append(0)
-            elif yVals1[t1i] >= theta:
+            elif y1New[ti] >= theta:
                 FCList.append(1)
             else:
                 FCList.append(0)
