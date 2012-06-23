@@ -2453,16 +2453,121 @@ def doubleOnTrials(dir="./", FRDelta=10):
 
     return (doubleOn*1.0/(nTrials*1.0), doubleOn)
 
+#-------------------------------------------------------------------------------
+def getSel1Sel2(UUID, tOn = 2000):
+    
+    GESel1FileName = findFileName([UUID, ".fr", "GESel1"])[0]
+    GESel2FileName = findFileName([UUID, ".fr", "GESel2"])[0]
+    
+    t1, y1 = doubleListFromFile(GESel1FileName, isFloat=True)
+    t2, y2 = doubleListFromFile(GESel2FileName, isFloat=True)
 
 
+    tMin = min(min(t1),min(t2)) 
+    tMax = max(max(t1),max(t2))
+    tLen = max(len(t1), len(t2))
+    t3 = np.linspace(tMin, tMax, tLen)
+    
+    y3 = np.zeros(len(t3))
+    for i in range(len(y3)):
+        currT = t3[i]
+        tmpInds = np.nonzero(t1<=currT)[0]
+        if len(tmpInds) == 0:
+            y1LInd = 0
+        else:
+            y1LInd = tmpInds[-1]
+        tmpInds = np.nonzero(t1>=currT)[0]
+        if len(tmpInds) == 0:
+            y1RInd = len(t1)-1
+        else:
+            y1RInd = tmpInds[0]
+        
+        tmpInds = np.nonzero(t2<=currT)[0]
+        if len(tmpInds) == 0:
+            y2LInd = 0
+        else:
+            y2LInd = tmpInds[-1]
+        tmpInds = np.nonzero(t2>=currT)[0]
+        if len(tmpInds) == 0:
+            y2RInd = len(t2)-1
+        else:
+            y2RInd = tmpInds[0]
+        
+        y1Tmp = (y1[y1RInd]+y1[y1LInd])/2            
+        y2Tmp = (y2[y2RInd]+y2[y2LInd])/2
+        
+        y3[i] = y1Tmp - y2Tmp
+    
+    tOnInd = np.nonzero(t3<tOn)[0][-1] + 1
+
+    return t3[tOnInd:], y3[tOnInd:]
+
+#-------------------------------------------------------------------------------
+def plotFRSel1Sel2DiffDir(dir="./",  sameFigure=False):
 
 
+    UUIDList = getUUIDList(dir=dir)
+    
+    print len(UUIDList)
+    
+    for i in range(len(UUIDList)):
+        print i
+        t,y=getSel1Sel2(UUIDList[i])
+        if sameFigure == True:
+            pl.figure(1)
+            pl.plot(t,y)
+        else:
+            pl.figure()
+            pl.plot(t,y)
+
+    return
 
 
-
-
-
-
-
-
-
+#-------------------------------------------------------------------------------
+def fitFfunction(tOn = 2000):
+    
+    GESel1FileName = findFileName([UUID, ".fr", "GESel1"])[0]
+    GESel2FileName = findFileName([UUID, ".fr", "GESel2"])[0]
+    
+    t1, y1 = doubleListFromFile(GESel1FileName, isFloat=True)
+    t2, y2 = doubleListFromFile(GESel2FileName, isFloat=True)
+    
+    
+    tMin = min(min(t1),min(t2)) 
+    tMax = max(max(t1),max(t2))
+    tLen = max(len(t1), len(t2))
+    t3 = np.linspace(tMin, tMax, tLen)
+    
+    y3 = np.zeros(len(t3))
+    for i in range(len(y3)):
+        currT = t3[i]
+        tmpInds = np.nonzero(t1<=currT)[0]
+        if len(tmpInds) == 0:
+            y1LInd = 0
+        else:
+            y1LInd = tmpInds[-1]
+        tmpInds = np.nonzero(t1>=currT)[0]
+        if len(tmpInds) == 0:
+            y1RInd = len(t1)-1
+        else:
+            y1RInd = tmpInds[0]
+        
+        tmpInds = np.nonzero(t2<=currT)[0]
+        if len(tmpInds) == 0:
+            y2LInd = 0
+        else:
+            y2LInd = tmpInds[-1]
+        tmpInds = np.nonzero(t2>=currT)[0]
+        if len(tmpInds) == 0:
+            y2RInd = len(t2)-1
+        else:
+            y2RInd = tmpInds[0]
+        
+        y1Tmp = (y1[y1RInd]+y1[y1LInd])/2            
+        y2Tmp = (y2[y2RInd]+y2[y2LInd])/2
+        
+        y3[i] = y1Tmp - y2Tmp
+    
+    tOnInd = np.nonzero(t3<tOn)[0][-1] + 1
+    
+    return t3[tOnInd:], y3[tOnInd:]
