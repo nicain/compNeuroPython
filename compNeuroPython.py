@@ -2409,21 +2409,25 @@ def plotFRSel1Sel2(UUID, figureInd=1):
     t2, fr2 = doubleListFromFile(GESel2FileName, isFloat=True)
     
     pl.figure(figureInd)
-    pl.plot(t1,fr1,'b')
-    pl.plot(t2,fr2,'g')
+    if fr1[-1] > fr2[-1]:
+        pl.plot(t1,fr1,'b')
+        pl.plot(t2,fr2,'g')
+    else:
+        pl.plot(t1,fr1,'g')
+        pl.plot(t2,fr2,'b')
 
 #-------------------------------------------------------------------------------
-def plotFRSel1Sel2Dir(dir="./",  sameFigure=False):
+def plotFRSel1Sel2Dir(dir="./",  figure="Same"):
     
     UUIDList = getUUIDList(dir=dir)
     
     print len(UUIDList)
     
     for i in range(len(UUIDList)):
-        if sameFigure == True:
+        if figure == "Same":
             plotFRSel1Sel2(UUIDList[i], figureInd=1)
         else:
-            plotFRSel1Sel2(UUIDList[i], figureInd=i)
+            plotFRSel1Sel2(UUIDList[i], figureInd=figure)
 
 
 #-------------------------------------------------------------------------------
@@ -2454,56 +2458,72 @@ def doubleOnTrials(dir="./", FRDelta=10):
     return (doubleOn*1.0/(nTrials*1.0), doubleOn)
 
 #-------------------------------------------------------------------------------
-def getSel1Sel2(UUID, tOn = 2000):
+def getSel1Sel2(UUID, tOn = 2000, what='FR'):
     
-    GESel1FileName = findFileName([UUID, ".fr", "GESel1"])[0]
-    GESel2FileName = findFileName([UUID, ".fr", "GESel2"])[0]
+    if what == 'FR':
+        s1="GESel1"
+        s2="GESel2"
+        type=".fr"
+    elif what == 'NMDA':
+        s1="GESel1PoolRecNMDA"
+        s2="GESel2PoolRecNMDA"
+        type=".dat"
+
+    GESel1FileName = findFileName([UUID, type, s1])[0]
+    GESel2FileName = findFileName([UUID, type, s2])[0]
     
     t1, y1 = doubleListFromFile(GESel1FileName, isFloat=True)
     t2, y2 = doubleListFromFile(GESel2FileName, isFloat=True)
 
 
-    tMin = min(min(t1),min(t2)) 
-    tMax = max(max(t1),max(t2))
-    tLen = max(len(t1), len(t2))
-    t3 = np.linspace(tMin, tMax, tLen)
-    
-    y3 = np.zeros(len(t3))
-    for i in range(len(y3)):
-        currT = t3[i]
-        tmpInds = np.nonzero(t1<=currT)[0]
-        if len(tmpInds) == 0:
-            y1LInd = 0
-        else:
-            y1LInd = tmpInds[-1]
-        tmpInds = np.nonzero(t1>=currT)[0]
-        if len(tmpInds) == 0:
-            y1RInd = len(t1)-1
-        else:
-            y1RInd = tmpInds[0]
+    if what == "FR":
+        tMin = min(min(t1),min(t2)) 
+        tMax = max(max(t1),max(t2))
+        tLen = max(len(t1), len(t2))
+        t3 = np.linspace(tMin, tMax, tLen)
         
-        tmpInds = np.nonzero(t2<=currT)[0]
-        if len(tmpInds) == 0:
-            y2LInd = 0
-        else:
-            y2LInd = tmpInds[-1]
-        tmpInds = np.nonzero(t2>=currT)[0]
-        if len(tmpInds) == 0:
-            y2RInd = len(t2)-1
-        else:
-            y2RInd = tmpInds[0]
-        
-        y1Tmp = (y1[y1RInd]+y1[y1LInd])/2            
-        y2Tmp = (y2[y2RInd]+y2[y2LInd])/2
-        
-        y3[i] = y1Tmp - y2Tmp
+        y3 = np.zeros(len(t3))
+        y3neg = np.zeros(len(t3))
+        for i in range(len(y3)):
+            currT = t3[i]
+            tmpInds = np.nonzero(t1<=currT)[0]
+            if len(tmpInds) == 0:
+                y1LInd = 0
+            else:
+                y1LInd = tmpInds[-1]
+            tmpInds = np.nonzero(t1>=currT)[0]
+            if len(tmpInds) == 0:
+                y1RInd = len(t1)-1
+            else:
+                y1RInd = tmpInds[0]
+            
+            tmpInds = np.nonzero(t2<=currT)[0]
+            if len(tmpInds) == 0:
+                y2LInd = 0
+            else:
+                y2LInd = tmpInds[-1]
+            tmpInds = np.nonzero(t2>=currT)[0]
+            if len(tmpInds) == 0:
+                y2RInd = len(t2)-1
+            else:
+                y2RInd = tmpInds[0]
+            
+            y1Tmp = (y1[y1RInd]+y1[y1LInd])/2            
+            y2Tmp = (y2[y2RInd]+y2[y2LInd])/2
+            
+            y3[i] = y1Tmp - y2Tmp
+            y3neg[i] = y1Tmp + y2Tmp
+    elif what == "NMDA":
+        y3=-(y1-y2)
+        y3neg=-(y1+y2)
+        t3=t1
     
     tOnInd = np.nonzero(t3<tOn)[0][-1] + 1
 
-    return t3[tOnInd:], y3[tOnInd:]
+    return t3[tOnInd:], y3[tOnInd:], y3neg[tOnInd:]
 
 #-------------------------------------------------------------------------------
-def plotFRSel1Sel2DiffDir(dir="./",  sameFigure=False):
+def plotSel1Sel2DiffDir(dir="./",  figure=1, what='FR', ICDelta="Inf"):
 
 
     UUIDList = getUUIDList(dir=dir)
@@ -2512,62 +2532,141 @@ def plotFRSel1Sel2DiffDir(dir="./",  sameFigure=False):
     
     for i in range(len(UUIDList)):
         print i
-        t,y=getSel1Sel2(UUIDList[i])
-        if sameFigure == True:
-            pl.figure(1)
-            pl.plot(t,y)
-        else:
-            pl.figure()
-            pl.plot(t,y)
+        t,y,yneg=getSel1Sel2(UUIDList[i], what=what)
+        if abs(y[0]) < float(ICDelta):
+            print abs(y[0])
+            pl.figure(figure)
+            if y[-1]>0:
+                pl.plot(y[0],yneg[0],'b.')
+            else:  
+                pl.plot(y[0],yneg[0],'g.')
+
 
     return
 
+def smooth(x,window_len=3,window='hanning'):
+    """smooth the data using a window with requested size.
+        
+        This method is based on the convolution of a scaled window with the signal.
+        The signal is prepared by introducing reflected copies of the signal 
+        (with the window size) in both ends so that transient parts are minimized
+        in the begining and end part of the output signal.
+        
+        input:
+        x: the input signal 
+        window_len: the dimension of the smoothing window; should be an odd integer
+        window: the type of window from 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'
+        flat window will produce a moving average smoothing.
+        
+        output:
+        the smoothed signal
+        
+        example:
+        
+        t=linspace(-2,2,0.1)
+        x=sin(t)+randn(len(t))*0.1
+        y=smooth(x)
+        
+        see also: 
+        
+        numpy.hanning, numpy.hamming, numpy.bartlett, numpy.blackman, numpy.convolve
+        scipy.signal.lfilter
+        
+        TODO: the window parameter could be the window itself if an array instead of a string
+        NOTE: length(output) != length(input), to correct this: return y[(window_len/2-1):-(window_len/2)] instead of just y.
+        """
+    
+    if x.ndim != 1:
+        raise ValueError, "smooth only accepts 1 dimension arrays."
+    
+    if x.size < window_len:
+        raise ValueError, "Input vector needs to be bigger than window size."
+    
+    
+    if window_len<3:
+        return x
+    
+    
+    if not window in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
+        raise ValueError, "Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'"
+    
+    
+    s=np.r_[x[window_len-1:0:-1],x,x[-1:-window_len:-1]]
+    #print(len(s))
+    if window == 'flat': #moving average
+        w=np.ones(window_len,'d')
+    else:
+        w=eval('np.'+window+'(window_len)')
+    
+    y=np.convolve(w/w.sum(),s,mode='valid')
+    return y
 
-#-------------------------------------------------------------------------------
-def fitFfunction(tOn = 2000):
+def ICStudy(dir="./", what='FR', tOn=2000, plot=0, save=0, loadFile=None):
+
+    if loadFile != None:
+        result=pt.unpickle(loadFile)
+    else:
     
-    GESel1FileName = findFileName([UUID, ".fr", "GESel1"])[0]
-    GESel2FileName = findFileName([UUID, ".fr", "GESel2"])[0]
-    
-    t1, y1 = doubleListFromFile(GESel1FileName, isFloat=True)
-    t2, y2 = doubleListFromFile(GESel2FileName, isFloat=True)
-    
-    
-    tMin = min(min(t1),min(t2)) 
-    tMax = max(max(t1),max(t2))
-    tLen = max(len(t1), len(t2))
-    t3 = np.linspace(tMin, tMax, tLen)
-    
-    y3 = np.zeros(len(t3))
-    for i in range(len(y3)):
-        currT = t3[i]
-        tmpInds = np.nonzero(t1<=currT)[0]
-        if len(tmpInds) == 0:
-            y1LInd = 0
-        else:
-            y1LInd = tmpInds[-1]
-        tmpInds = np.nonzero(t1>=currT)[0]
-        if len(tmpInds) == 0:
-            y1RInd = len(t1)-1
-        else:
-            y1RInd = tmpInds[0]
+        UUIDList = getUUIDList(dir=dir)
+
+        if what == 'FR':
+            s1="GESel1"
+            s2="GESel2"
+            type=".fr"
+        elif what == 'NMDA':
+            s1="GESel1PoolRecNMDA"
+            s2="GESel2PoolRecNMDA"
+            type=".dat"
         
-        tmpInds = np.nonzero(t2<=currT)[0]
-        if len(tmpInds) == 0:
-            y2LInd = 0
-        else:
-            y2LInd = tmpInds[-1]
-        tmpInds = np.nonzero(t2>=currT)[0]
-        if len(tmpInds) == 0:
-            y2RInd = len(t2)-1
-        else:
-            y2RInd = tmpInds[0]
         
-        y1Tmp = (y1[y1RInd]+y1[y1LInd])/2            
-        y2Tmp = (y2[y2RInd]+y2[y2LInd])/2
-        
-        y3[i] = y1Tmp - y2Tmp
-    
-    tOnInd = np.nonzero(t3<tOn)[0][-1] + 1
-    
-    return t3[tOnInd:], y3[tOnInd:]
+        result = []
+        for UUID in UUIDList:
+            
+
+            GESel1FileName = findFileName([UUID, type, s1])[0]
+            GESel2FileName = findFileName([UUID, type, s2])[0]
+
+            t1, y1 = doubleListFromFile(GESel1FileName, isFloat=True)
+            t2, y2 = doubleListFromFile(GESel2FileName, isFloat=True)
+
+            ti1 = np.nonzero(np.array(t1)<tOn)[0][-1] + 1
+            ti2 = np.nonzero(np.array(t2)<tOn)[0][-1] + 1
+
+            if y1[-1]-y2[-1] > 0:
+                correct = 1
+            else:
+                correct = 0
+            
+            result.append([[y1[ti1]-y2[ti2],y1[ti1]+y2[ti2]],correct])
+
+        if save == 1:
+            pt.pickle(result,"ICStudy_"+what+".dat")
+
+    if plot==1:
+        for tuple, correct in result:
+            if correct == 1:
+                pl.plot([tuple[0]],[tuple[1]],'.g')
+            else:
+                pl.plot([tuple[0]],[tuple[1]],'.r')
+
+    return result
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
