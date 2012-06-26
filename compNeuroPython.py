@@ -1221,8 +1221,6 @@ def thresholdTestSynapseUUID(UUID, thetaList, verbose=1, tOn = 0):
         
         y3 = y1-y2
     
-        
-        pl.plot(y3)
                 
         
         currTime = 0
