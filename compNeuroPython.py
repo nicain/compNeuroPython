@@ -812,7 +812,7 @@ def thresholdTestUUIDDiff(UUID, thetaList, verbose=1, tOn = 0):
             y3[i] = y1Tmp - y2Tmp
 
 
-        y3i = np.nonzero(t3<tOn)[0][-1]
+        y3i = np.nonzero(t3<=tOn)[0][-1]
         FCList = []
         RTList = []
         for theta in thetaList:
@@ -867,8 +867,8 @@ def thresholdTestICUUID(UUID, thetaList, verbose=1, tOn = 0, FRDelta=.2):
         t1,y1 = doubleListFromFile(GESel1FileName, isFloat=True)
         t2,y2 = doubleListFromFile(GESel2FileName, isFloat=True)
         
-        ti1 = np.nonzero(np.array(t1)<tOn)[0][-1] + 1
-        ti2 = np.nonzero(np.array(t1)<tOn)[0][-1] + 1
+        ti1 = np.nonzero(np.array(t1)<=tOn)[0][-1] + 1
+        ti2 = np.nonzero(np.array(t1)<=tOn)[0][-1] + 1
     
         yDelta = abs(y1[ti1] - y2[ti2])
         if yDelta < FRDelta:
