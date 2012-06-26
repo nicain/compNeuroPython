@@ -299,7 +299,7 @@ def firstCrossing(ytVals1, ytVals2, thetaList, tOn = 0):
 
 
 
-    ti = np.nonzero(np.array(tNew)<tOn)[0][-1] + 1
+    ti = np.nonzero(np.array(tNew)<=tOn)[0][-1] + 1
     currTime = tNew[ti]
     FCList = []
     RTList = []
