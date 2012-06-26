@@ -178,17 +178,21 @@ def firingRate(inputData,
             validTimesList.append(spikeTime)
     
     # Create plotting axes:
-    tMin = validTimesList[0]
-    tMax = validTimesList[-1]
     if t==None:
+        tMin = validTimesList[0]
+        tMax = validTimesList[-1]
         t = arange(tMin,tMax,dt)
+        events, edges = histogram(validTimesList, bins=t)
+    else:
+        tMin=min(validTimesList[0],t[0])
+        tMax=max(validTimesList[-1],t[-1])
+        dt=t[1]-t[0]
+        histT =  arange(tMin-window,tMax,dt)
+        events, edges = histogram(validTimesList, bins=histT)
     y = zeros(len(t))
     
-    # Create histogram:
-    events, edges = histogram(validTimesList, bins=t)
-    maxInd = len(events)-1
-    
     # Create firing rate function:
+    maxInd = len(events)-1
     def getFR(t):
         if causal == False:
             if t < tMin + window/2:
@@ -430,7 +434,7 @@ def splitFileName(fileName):
 
 #-------------------------------------------------------------------------------
 
-def ntfToFRFile(fileName,window=50, causal=True):
+def ntfToFRFile(fileName,window=50, causal=True, tIn=None):
 
     # Parse name:
     fileNamePrefix, fileNameSuffix = splitFileName(fileName)
@@ -445,7 +449,7 @@ def ntfToFRFile(fileName,window=50, causal=True):
         data = getDataFromFile(fileName)
     
         # Make into FR function:
-        t,y = firingRate(data,window=window, causal=causal)
+        t,y = firingRate(data,window=window, causal=causal, t=tIn)
 
         # Write to fr file:
         doubleListToFile(t, y, fileNamePrefix + ".fr")
@@ -1188,6 +1192,60 @@ def thresholdTestCurrentUUID(UUID, thetaList, verbose=1, tOn = 0):
             print "UUID " + UUID + " tested and saved."
     return RTList, FCList
 
+#-------------------------------------------------------------------------------
+def thresholdTestSynapseUUID(UUID, thetaList, verbose=1, tOn = 0):
+    
+    fileName = "thresholdTestCurrent_" + UUID + ".dat"
+    
+    if os.path.isfile(fileName):
+        thetaList, RTList, FCList = tripleListFromFile(fileName)
+        if verbose:
+            print "UUID " + UUID + " loaded."
+    else:
+        
+        if verbose:
+            print "Testing UUID (current): " + UUID
+        
+        GESel1FileName = findFileName([UUID, ".dat", "GESel1SInputSum"])[0]
+        GESel2FileName = findFileName([UUID, ".dat", "GESel2SInputSum"])[0]
+        t1,x1 = doubleListFromFile(GESel1FileName, isFloat=True)
+        t2,x2 = doubleListFromFile(GESel2FileName, isFloat=True)
+        
+        y1 = -x1.cumsum()
+        y2 = -x2.cumsum()
+        
+        y3 = y1-y2
+        
+        if tOn == 0:
+            ti = 0
+        else:
+            ti = np.nonzero(np.array(t1)<tOn)[0][-1] + 1
+        
+        currTime = 0
+        FCList = []
+        RTList = []
+        
+        for theta in thetaList:
+            
+            try:
+                while abs(y3[ti]) < theta:
+                    ti += 1
+                
+                if y3[ti] >= theta:
+                    FCList.append(1)
+                else:
+                    FCList.append(0)
+                RTList.append(t1[ti])
+            
+            except:
+                FCList.append(-1)
+                RTList.append(float("inf"))
+        
+        tripleListToFile(thetaList, RTList, FCList, fileName)
+        if verbose:
+            print "UUID " + UUID + " tested and saved."
+    return RTList, FCList
+
 
 #-------------------------------------------------------------------------------
 def thresholdTestCurrentBGTooUUID(UUID, thetaList, verbose=1, tOn = 0):
@@ -1836,7 +1894,7 @@ def stripUUIDAndSettingsDir(dir="./", verbose=True):
     return    
 
 #-------------------------------------------------------------------------------
-def plotFR(filename,plotstyle = '-', figure=1):
+def plotFR(filename,plotstyle = '-', figure=1,tIn=None):
 
     if isType(filename,'fr'):
         t,y = doubleListFromFile(filename)
@@ -1845,7 +1903,7 @@ def plotFR(filename,plotstyle = '-', figure=1):
     elif isType(filename,'ntf'):
         data = getDataFromFile(filename)
         t,y = firingRate(data, 
-                         t=None,
+                         t=tIn,
                          window=50, 
                          nameList='All', 
                          plotsOn=False, 
@@ -2365,21 +2423,21 @@ def speedAccTradeoffSPRTUnCorrBGToo(C, BGRate=2400, N=240, r0 = 40, bP = .4, bN 
 #-------------------------------------------------------------------------------
 def loadAllCurrents(UUID):
     
-    GESel1AllFileName = findFileName([UUID, ".dat", "GESel1DummyAll"])[0]
-    GESel2AllFileName = findFileName([UUID, ".dat", "GESel2DummyAll"])[0]
-    GESel1RecAMPAFileName = findFileName([UUID, ".dat", "GESel1DummyAMPA"])[0]
-    GESel2RecAMPAFileName = findFileName([UUID, ".dat", "GESel2DummyAMPA"])[0]
-    GESel1RecNMDAFileName = findFileName([UUID, ".dat", "GESel1DummyNMDA"])[0]
-    GESel2RecNMDAFileName = findFileName([UUID, ".dat", "GESel2DummyNMDA"])[0]
-    GESel1RecGABAFileName = findFileName([UUID, ".dat", "GESel1DummyGABA"])[0]
-    GESel2RecGABAFileName = findFileName([UUID, ".dat", "GESel2DummyGABA"])[0]
-    GESel1InputFileName = findFileName([UUID, ".dat", "GESel1DummyInput"])[0]
-    GESel2InputFileName = findFileName([UUID, ".dat", "GESel2DummyInput"])[0]
-    GESel1BGFileName = findFileName([UUID, ".dat", "GESel1DummyBG"])[0]
-    GESel2BGFileName = findFileName([UUID, ".dat", "GESel2DummyBG"])[0]
+#    GESel1AllFileName = findFileName([UUID, ".dat", "GESel1DummyAll"])[0]
+#    GESel2AllFileName = findFileName([UUID, ".dat", "GESel2DummyAll"])[0]
+    GESel1RecAMPAFileName = findFileName([UUID, ".dat", "GESel1PoolRecAMPA"])[0]
+    GESel2RecAMPAFileName = findFileName([UUID, ".dat", "GESel2PoolRecAMPA"])[0]
+    GESel1RecNMDAFileName = findFileName([UUID, ".dat", "GESel1PoolRecNMDA"])[0]
+    GESel2RecNMDAFileName = findFileName([UUID, ".dat", "GESel2PoolRecNMDA"])[0]
+    GESel1RecGABAFileName = findFileName([UUID, ".dat", "GESel1PoolRecGABA"])[0]
+    GESel2RecGABAFileName = findFileName([UUID, ".dat", "GESel2PoolRecGABA"])[0]
+    GESel1InputFileName = findFileName([UUID, ".dat", "GESel1PoolInput"])[0]
+    GESel2InputFileName = findFileName([UUID, ".dat", "GESel2PoolInput"])[0]
+    GESel1BGFileName = findFileName([UUID, ".dat", "GESel1PoolBG"])[0]
+    GESel2BGFileName = findFileName([UUID, ".dat", "GESel2PoolBG"])[0]
     
-    t, All1 = doubleListFromFile(GESel1AllFileName, isFloat=True)
-    t, All2 = doubleListFromFile(GESel2AllFileName, isFloat=True)
+#    t, All1 = doubleListFromFile(GESel1AllFileName, isFloat=True)
+#    t, All2 = doubleListFromFile(GESel2AllFileName, isFloat=True)
     t, xAMPA1 = doubleListFromFile(GESel1RecAMPAFileName, isFloat=True)
     t, xAMPA2 = doubleListFromFile(GESel2RecAMPAFileName, isFloat=True)
     t, xNMDA1 = doubleListFromFile(GESel1RecNMDAFileName, isFloat=True)
@@ -2391,8 +2449,7 @@ def loadAllCurrents(UUID):
     t, xBG1 = doubleListFromFile(GESel1BGFileName, isFloat=True)
     t, xBG2 = doubleListFromFile(GESel2BGFileName, isFloat=True)
 
-    return (t, 
-            (-All1, -All2),
+    return (t,
             (-xAMPA1,-xAMPA2),
             (-xNMDA1,-xNMDA2),
             (-xGABA1,-xGABA2),
@@ -2410,11 +2467,11 @@ def plotFRSel1Sel2(UUID, figureInd=1):
     
     pl.figure(figureInd)
     if fr1[-1] > fr2[-1]:
-        pl.plot(t1,fr1,'b')
-        pl.plot(t2,fr2,'g')
-    else:
         pl.plot(t1,fr1,'g')
-        pl.plot(t2,fr2,'b')
+        pl.plot(t2,fr2,'r')
+    else:
+        pl.plot(t1,fr1,'r')
+        pl.plot(t2,fr2,'g')
 
 #-------------------------------------------------------------------------------
 def plotFRSel1Sel2Dir(dir="./",  figure="Same"):
@@ -2523,23 +2580,23 @@ def getSel1Sel2(UUID, tOn = 2000, what='FR'):
     return t3[tOnInd:], y3[tOnInd:], y3neg[tOnInd:]
 
 #-------------------------------------------------------------------------------
-def plotSel1Sel2DiffDir(dir="./",  figure=1, what='FR', ICDelta="Inf"):
+def plotSel1Sel2DiffDir(dir="./",  figure=1, what='FR', ICDelta="Inf",N=-1):
 
 
     UUIDList = getUUIDList(dir=dir)
     
     print len(UUIDList)
     
-    for i in range(len(UUIDList)):
+    for i in range(len(UUIDList[0:N])):
         print i
         t,y,yneg=getSel1Sel2(UUIDList[i], what=what)
         if abs(y[0]) < float(ICDelta):
             print abs(y[0])
             pl.figure(figure)
             if y[-1]>0:
-                pl.plot(y[0],yneg[0],'b.')
+                pl.plot(y,yneg,'g')
             else:  
-                pl.plot(y[0],yneg[0],'g.')
+                pl.plot(y,yneg,'r')
 
 
     return
@@ -2636,8 +2693,9 @@ def ICStudy(dir="./", what='FR', tOn=2000, plot=0, save=0, loadFile=None):
                 correct = 1
             else:
                 correct = 0
-            
+
             result.append([[y1[ti1]-y2[ti2],y1[ti1]+y2[ti2]],correct])
+#            result.append([[y1[-1]-y2[-1],y1[-1]+y2[-1]],correct])
 
         if save == 1:
             pt.pickle(result,"ICStudy_"+what+".dat")
