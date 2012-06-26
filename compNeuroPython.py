@@ -952,7 +952,7 @@ def thresholdTestICUUIDDiff(UUID, thetaList, verbose=1, tOn = 0, FRDelta=.2):
             y3[i] = y1Tmp - y2Tmp
         
         
-        y3i = np.nonzero(t3<tOn)[0][-1]
+        y3i = np.nonzero(t3<=tOn)[0][-1]
                 
         yDelta = abs(y3[y3i])
         print yDelta, t3[y3i]
