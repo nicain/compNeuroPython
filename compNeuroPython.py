@@ -1195,7 +1195,7 @@ def thresholdTestCurrentUUID(UUID, thetaList, verbose=1, tOn = 0):
 #-------------------------------------------------------------------------------
 def thresholdTestSynapseUUID(UUID, thetaList, verbose=1, tOn = 0):
     
-    fileName = "thresholdTestCurrent_" + UUID + ".dat"
+    fileName = "thresholdTestSynapse_" + UUID + ".dat"
     
     if os.path.isfile(fileName):
         thetaList, RTList, FCList = tripleListFromFile(fileName)
@@ -1210,20 +1210,25 @@ def thresholdTestSynapseUUID(UUID, thetaList, verbose=1, tOn = 0):
         GESel2FileName = findFileName([UUID, ".dat", "GESel2SInputSum"])[0]
         t1,x1 = doubleListFromFile(GESel1FileName, isFloat=True)
         t2,x2 = doubleListFromFile(GESel2FileName, isFloat=True)
-        
-        y1 = -x1.cumsum()
-        y2 = -x2.cumsum()
-        
-        y3 = y1-y2
-        
+
         if tOn == 0:
             ti = 0
         else:
             ti = np.nonzero(np.array(t1)<tOn)[0][-1] + 1
+    
+        y1 = x1[ti:].cumsum()
+        y2 = x2[ti:].cumsum()
+        
+        y3 = y1-y2
+    
+        
+        pl.plot(y3)
+                
         
         currTime = 0
         FCList = []
         RTList = []
+        ti = 0
         
         for theta in thetaList:
             
@@ -1287,6 +1292,69 @@ def thresholdTestCurrentBGTooUUID(UUID, thetaList, verbose=1, tOn = 0):
         FCList = []
         RTList = []
         
+        for theta in thetaList:
+            
+            try:
+                while abs(y3[ti]) < theta:
+                    ti += 1
+                
+                if y3[ti] >= theta:
+                    FCList.append(1)
+                else:
+                    FCList.append(0)
+                RTList.append(t1[ti])
+            
+            except:
+                FCList.append(-1)
+                RTList.append(float("inf"))
+        
+        tripleListToFile(thetaList, RTList, FCList, fileName)
+        if verbose:
+            print "UUID " + UUID + " tested and saved."
+    return RTList, FCList
+
+#-------------------------------------------------------------------------------
+def thresholdTestSynapseBGTooUUID(UUID, thetaList, verbose=1, tOn = 0):
+    
+    fileName = "thresholdTestSynapseBGToo_" + UUID + ".dat"
+    
+    if os.path.isfile(fileName):
+        thetaList, RTList, FCList = tripleListFromFile(fileName)
+        if verbose:
+            print "UUID " + UUID + " loaded."
+    else:
+        
+        if verbose:
+            print "Testing UUID (current BG): " + UUID
+        
+        GESel1FileName = findFileName([UUID, ".dat", "GESel1SInputSum"])[0]
+        GESel2FileName = findFileName([UUID, ".dat", "GESel2SInputSum"])[0]
+        GESel1BGFileName = findFileName([UUID, ".dat", "GESel1SBGSum"])[0]
+        GESel2BGFileName = findFileName([UUID, ".dat", "GESel2SBGSum"])[0]
+        t1,x1 = doubleListFromFile(GESel1FileName, isFloat=True)
+        t2,x2 = doubleListFromFile(GESel2FileName, isFloat=True)
+        tBG1,xBG1 = doubleListFromFile(GESel1BGFileName, isFloat=True)
+        tBG2,xBG2 = doubleListFromFile(GESel2BGFileName, isFloat=True)
+        
+        x1 += xBG1
+        x2 += xBG2
+
+        if tOn == 0:
+            ti = 0
+        else:
+            ti = np.nonzero(np.array(t1)<tOn)[0][-1] + 1
+    
+    
+        y1 = x1[ti:].cumsum()
+        y2 = x2[ti:].cumsum()
+        
+        y3 = y1-y2
+        
+        currTime = 0
+        FCList = []
+        RTList = []
+            
+        ti=0
         for theta in thetaList:
             
             try:
