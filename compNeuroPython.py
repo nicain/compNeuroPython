@@ -2752,8 +2752,8 @@ def ICStudy(dir="./", what='FR', tOn=2000, plot=0, save=0, loadFile=None):
             t1, y1 = doubleListFromFile(GESel1FileName, isFloat=True)
             t2, y2 = doubleListFromFile(GESel2FileName, isFloat=True)
 
-            ti1 = np.nonzero(np.array(t1)<tOn)[0][-1] + 1
-            ti2 = np.nonzero(np.array(t2)<tOn)[0][-1] + 1
+            ti1 = np.nonzero(np.array(t1)<=tOn)[0][-1] + 1
+            ti2 = np.nonzero(np.array(t2)<=tOn)[0][-1] + 1
 
             if y1[-1]-y2[-1] > 0:
                 correct = 1
