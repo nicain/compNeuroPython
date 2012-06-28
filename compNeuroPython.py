@@ -1108,15 +1108,15 @@ def thresholdTestSpikesBGTooUUID(UUID, thetaList, verbose=1, tOn = 0, tau=100, b
                         t1i += 1
                         if currTime > tOn:
                             spikeCounter += 1
-                    elif currTime == t2[t2i]:
+                    if currTime == t2[t2i]:
                         t2i += 1
                         if currTime > tOn:
                             spikeCounter -= 1
-                    elif currTime == tBG1[tBG1i]:
+                    if currTime == tBG1[tBG1i]:
                         tBG1i += 1
                         if currTime > tOn:
                             spikeCounter += 1
-                    else:
+                    if currTime == tBG2[tBG2i]:
                         tBG2i += 1
                         if currTime > tOn:
                             spikeCounter -= 1
@@ -2540,13 +2540,13 @@ def plotFRSel1Sel2(UUID, figureInd=1):
         pl.plot(t2,fr2,'g')
 
 #-------------------------------------------------------------------------------
-def plotFRSel1Sel2Dir(dir="./",  figure="Same"):
+def plotFRSel1Sel2Dir(dir="./",  figure="Same",N=-1):
     
     UUIDList = getUUIDList(dir=dir)
     
     print len(UUIDList)
     
-    for i in range(len(UUIDList)):
+    for i in range(len(UUIDList[0:N])):
         if figure == "Same":
             plotFRSel1Sel2(UUIDList[i], figureInd=1)
         else:
@@ -2776,10 +2776,37 @@ def ICStudy(dir="./", what='FR', tOn=2000, plot=0, save=0, loadFile=None):
     return result
 
 
+#-------------------------------------------------------------------------------
+def plotFRSel1Sel2SSDiffDir(dir="./",N=-1,figure=1):
+    
+    UUIDList = getUUIDList(dir=dir)
+    
+    print len(UUIDList)
+    
+    endValPlus=[]
+    endValMinus=[]
+    for i in range(len(UUIDList[0:N])):
+    
+        GESel1FileName = findFileName([UUIDList[i], ".fr", "GESel1"])[0]
+        GESel2FileName = findFileName([UUIDList[i], ".fr", "GESel2"])[0]
+    
+        t1, fr1 = doubleListFromFile(GESel1FileName, isFloat=True)
+        t2, fr2 = doubleListFromFile(GESel2FileName, isFloat=True)
+    
+        if fr1[-1] > fr2[-1]:
+            endValPlus.append(fr1[-1]-fr2[-1])
+        else:
+            endValMinus.append(fr1[-1]-fr2[-1])
 
+    endValPlus = np.array(endValPlus)
+    endValMinus = np.array(endValMinus)
 
-
-
+    print endValPlus.mean(), endValPlus.std(), endValPlus.std()/np.sqrt(len(endValPlus))
+    print endValMinus.mean(), endValMinus.std(), endValMinus.std()/np.sqrt(len(endValMinus))
+    
+    pl.figure(figure)
+    pl.hist(endValPlus,20)
+    pl.hist(endValMinus,20)
 
 
 
