@@ -434,6 +434,15 @@ def splitFileName(fileName):
 
 #-------------------------------------------------------------------------------
 
+def ntfToFRDir(dir="./", verbose=True, tIn=None, causal=True, window=50):
+    
+    for f in dirList(dir):
+        ntfToFRFile(f, window=window, causal=causal, tIn=tIn)
+
+    return
+
+#-------------------------------------------------------------------------------
+
 def ntfToFRFile(fileName,window=50, causal=True, tIn=None):
 
     # Parse name:
@@ -476,9 +485,9 @@ def doubleListToFile(L1, L2, fileName):
         
 #-------------------------------------------------------------------------------
         
-def doubleListFromFile(fileName, isFloat=False):
+def doubleListFromFile(fileName, isFloat=False, whichDir='./', delim="\t"):
     
-    f = open(fileName, 'r')
+    f = open(os.path.join(whichDir,fileName), 'r')
     L1 = []
     L2 = []
     try:    
@@ -486,10 +495,10 @@ def doubleListFromFile(fileName, isFloat=False):
             if line == "\n":
                 break
             else:
-                a,b = line.split("\t")
+                a,b = line.strip().split(delim)
                 L1.append(a)
                 L2.append(b)
-    
+
         if isFloat==True:
             L1 = np.array(map(float,L1))
             L2 = np.array(map(float,L2))
@@ -554,11 +563,7 @@ def applyFxnToDir(fxn, dir="./", verbose=True):
             print "File " + f + " done."
     return
     
-#-------------------------------------------------------------------------------
 
-def ntfToFRDir(dir="./", verbose=True):
-    applyFxnToDir(ntfToFRFile, dir=dir, verbose=verbose)
-    return
 
 #-------------------------------------------------------------------------------
 
@@ -2150,7 +2155,7 @@ def rasterPlot(fileName):
 #-------------------------------------------------------------------------------
 def speedAccTradeoffSpikeIntUnCorr(C, N=240, r0 = 40, bP = .4, bN = .4, 
                                      dots = True, thetaMax=15, RTMax = 900,
-                                     plotStyle='-', TND=350, highlightTheta=False):
+                                     plotStyle='-', TND=350, highlightTheta=False, makePlot=True):
 
     from math import log
     
@@ -2160,17 +2165,30 @@ def speedAccTradeoffSpikeIntUnCorr(C, N=240, r0 = 40, bP = .4, bN = .4,
     h0 = log(rN/rP)
     Ez = N*(rP-rN)
     
-    SpeedAccTradeoffExact(h0, Ez, thetaMax, RTMax=RTMax, TND=TND, plotStyle = plotStyle)
+    if makePlot == True:
+        SpeedAccTradeoffExact(h0, Ez, thetaMax, RTMax=RTMax, TND=TND, plotStyle = plotStyle)
 
-    if dots == True:
-        plotDots(C, subject='both', RTMin = TND, RTMax = RTMax)
-    
-    if highlightTheta != False:
-        FCSpecial = FCvsTheta([highlightTheta],h0,Ez)
-        RTSpecial = RTvsTheta([highlightTheta],h0,Ez,TND=TND)
-        pl.plot(RTSpecial,FCSpecial,'*')
+        if dots == True:
+            plotDots(C, subject='both', RTMin = TND, RTMax = RTMax)
+        
+        if highlightTheta != False:
+            FCSpecial = FCvsTheta([highlightTheta],h0,Ez)
+            RTSpecial = RTvsTheta([highlightTheta],h0,Ez,TND=TND)
+            pl.plot(RTSpecial,FCSpecial,'*')
+        return
+    else:
+        theta=pl.linspace(0,thetaMax, 1000)
+        RT=RTvsTheta(theta,h0,Ez,TND=TND)
+        FC=FCvsTheta(theta,h0,Ez)
 
-    return
+        if highlightTheta != False:
+            FCSpecial = FCvsTheta([highlightTheta],h0,Ez)
+            RTSpecial = RTvsTheta([highlightTheta],h0,Ez,TND=TND)
+            
+            return (RT, FC, theta), (RTSpecial, FCSpecial, highlightTheta)
+        else:
+        
+            return RT, FC, theta
 
 #-------------------------------------------------------------------------------
 def speedAccTradeoffSPRTUnCorr(C, N=240, r0 = 40, bP = .4, bN = .4, 
@@ -2581,7 +2599,7 @@ def doubleOnTrials(dir="./", FRDelta=10):
     return (doubleOn*1.0/(nTrials*1.0), doubleOn)
 
 #-------------------------------------------------------------------------------
-def getSel1Sel2(UUID, tOn = 2000, what='FR'):
+def getSel1Sel2(UUID, tOn = 2000, what='FR', changeCoord=False,whichDir="./"):
     
     if what == 'FR':
         s1="GESel1"
@@ -2592,11 +2610,11 @@ def getSel1Sel2(UUID, tOn = 2000, what='FR'):
         s2="GESel2PoolRecNMDA"
         type=".dat"
 
-    GESel1FileName = findFileName([UUID, type, s1])[0]
-    GESel2FileName = findFileName([UUID, type, s2])[0]
+    GESel1FileName = findFileName([UUID, type, s1], whichDir=whichDir)[0]
+    GESel2FileName = findFileName([UUID, type, s2], whichDir=whichDir)[0]
     
-    t1, y1 = doubleListFromFile(GESel1FileName, isFloat=True)
-    t2, y2 = doubleListFromFile(GESel2FileName, isFloat=True)
+    t1, y1 = doubleListFromFile(GESel1FileName, isFloat=True, whichDir=whichDir)
+    t2, y2 = doubleListFromFile(GESel2FileName, isFloat=True, whichDir=whichDir)
 
 
     if what == "FR":
@@ -2607,6 +2625,8 @@ def getSel1Sel2(UUID, tOn = 2000, what='FR'):
         
         y3 = np.zeros(len(t3))
         y3neg = np.zeros(len(t3))
+        y1New = np.zeros(len(t3))
+        y2New = np.zeros(len(t3))
         for i in range(len(y3)):
             currT = t3[i]
             tmpInds = np.nonzero(t1<=currT)[0]
@@ -2636,14 +2656,25 @@ def getSel1Sel2(UUID, tOn = 2000, what='FR'):
             
             y3[i] = y1Tmp - y2Tmp
             y3neg[i] = y1Tmp + y2Tmp
+
+            y1New[i] = y1Tmp
+            y2New[i] = y2Tmp
     elif what == "NMDA":
         y3=-(y1-y2)
         y3neg=-(y1+y2)
         t3=t1
     
+
+
+
+
     tOnInd = np.nonzero(t3<tOn)[0][-1] + 1
 
-    return t3[tOnInd:], y3[tOnInd:], y3neg[tOnInd:]
+    if changeCoord == True:
+        return t3[tOnInd:], y3[tOnInd:], y3neg[tOnInd:]
+    elif changeCoord == False:
+        return t3[tOnInd:], y1New[tOnInd:], y2New[tOnInd:]
+
 
 #-------------------------------------------------------------------------------
 def plotSel1Sel2DiffDir(dir="./",  figure=1, what='FR', ICDelta="Inf",N=-1):
@@ -2804,14 +2835,131 @@ def plotFRSel1Sel2SSDiffDir(dir="./",N=-1,figure=1):
     print endValPlus.mean(), endValPlus.std(), endValPlus.std()/np.sqrt(len(endValPlus))
     print endValMinus.mean(), endValMinus.std(), endValMinus.std()/np.sqrt(len(endValMinus))
     
-    pl.figure(figure)
-    pl.hist(endValPlus,20)
-    pl.hist(endValMinus,20)
+#    pl.figure(figure)
+#    pl.hist(endValPlus,20)
+#    pl.hist(endValMinus,20)
+
+#-------------------------------------------------------------------------------
+def meanFRmeanSBGmeanIBG(dir='./', skipT=500):
+    
+    UUIDList = getUUIDList(dir=dir)
+
+    for UUID in UUIDList:
+        
+        for i in range(1,1+len(findFileName([UUID, ".fr"]))):
+
+            GESel1FRFileName = findFileName([UUID, ".fr", "GESel"+str(i)+"_"])[0]
+            GESel1SBGSumFileName = findFileName([UUID, ".dat", "GESel"+str(i)+"SBGSum_"])[0]
+            GESel1IBGSumFileName = findFileName([UUID, ".dat", "GESel"+str(i)+"IBGSum_"])[0]
+
+            tFR, FR = doubleListFromFile(GESel1FRFileName, isFloat=True)    
+            tS, S = doubleListFromFile(GESel1SBGSumFileName, isFloat=True)
+            tI, I = doubleListFromFile(GESel1IBGSumFileName, isFloat=True)
+
+
+            FRLi = np.nonzero(np.array(tFR)<=skipT/2)[0][-1] + 1
+            FRRi = np.nonzero(np.array(tFR)<=tFR[-1]-skipT/2)[0][-1] + 1
+            SLi = np.nonzero(np.array(tS)<=skipT/2)[0][-1] + 1
+            SRi = np.nonzero(np.array(tS)<=tS[-1]-skipT/2)[0][-1] + 1
+            ILi = np.nonzero(np.array(tI)<=skipT/2)[0][-1] + 1
+            IRi = np.nonzero(np.array(tI)<=tI[-1]-skipT/2)[0][-1] + 1
+            
+            FRNew = FR[FRLi:FRRi]
+            tFRNew = tFR[FRLi:FRRi]
+
+            SNew = S[SLi:SRi]
+            tSNew = tS[SLi:SRi]
+            
+            INew = I[ILi:IRi]
+            tINew = tI[ILi:IRi]
+            
+            print FRNew.mean(), SNew.mean(), INew.mean()
+
+    return 
+
+#-------------------------------------------------------------------------------
+def solve1DModel(dir='./',N=1, alpha=34.63, beta=6.4, betaGammaRatio=1.05):
+
+    UUIDList = getUUIDList(dir=dir)
+    
+    
+    endValPlus=[]
+    endValMinus=[]
+    counter = 0
+    for UUID in UUIDList[0:N]:
+        counter += 1
+        print counter
+        GESel1SBGSumFileName = findFileName([UUID, ".dat", "GESel1SBGSum"])[0]
+        GESel2SBGSumFileName = findFileName([UUID, ".dat", "GESel2SBGSum"])[0]
+        GESel1SInputSumFileName = findFileName([UUID, ".dat", "GESel1SInputSum"])[0]
+        GESel2SInputSumFileName = findFileName([UUID, ".dat", "GESel2SInputSum"])[0]
+
+        t, SB1 = doubleListFromFile(GESel1SBGSumFileName, isFloat=True)
+        t, SB2 = doubleListFromFile(GESel2SBGSumFileName, isFloat=True)
+        t, SI1 = doubleListFromFile(GESel1SInputSumFileName, isFloat=True)    
+        t, SI2 = doubleListFromFile(GESel2SInputSumFileName, isFloat=True)
+        
+        Input=SI1+SB1-SI2-SB2
+
+        ansSim=np.zeros(len(t))
+        for i in range(1,len(t)):
+            ansSim[i] = ansSim[i-1]+(t[1]-t[0])/1000*(-2*beta*ansSim[i-1]*(ansSim[i-1]/alpha-1)*(ansSim[i-1]/alpha+1)+(beta/1.05)*Input[i-1])
+        
+        if ansSim[-1] > 0:
+            endValPlus.append(ansSim[-1])
+        else:
+            endValMinus.append(ansSim[-1])
+
+        pl.plot(t,ansSim)
+        pl.xlim([0,3000])
+        pl.ylim([-50,50])
+
+
+    endValPlus = np.array(endValPlus)
+    endValMinus = np.array(endValMinus)
+    print endValPlus.mean(), endValPlus.std(), endValPlus.std()/np.sqrt(len(endValPlus)) 
+    print endValMinus.mean(), endValMinus.std(), endValMinus.std()/np.sqrt(len(endValMinus))
+    print len(endValPlus)*1.0/(len(endValPlus)+len(endValMinus))
+
+            
 
 
 
 
+#-------------------------------------------------------------------------------
+def plotdEdtVsE(dir="./",N=-1,figure=1):
+    
+    UUIDList = getUUIDList(dir=dir)
+    
+    print len(UUIDList)
+    
+    endValPlus=[]
+    endValMinus=[]
+    
+    deVals = np.arange(-60,60,.1)[0:-1]+.05
+    EVals = np.arange(-60,60,.1)[0:-1]+.05
+    myBins = np.arange(-60,60,.1)
+    
+    for i in range(len(UUIDList[0:N])):
+        
+        GESel1FileName = findFileName([UUIDList[i], ".fr", "GESel1"])[0]
+        GESel2FileName = findFileName([UUIDList[i], ".fr", "GESel2"])[0]
+        
+        t1, fr1 = doubleListFromFile(GESel1FileName, isFloat=True)
+        t2, fr2 = doubleListFromFile(GESel2FileName, isFloat=True)
+        
+        frDiff = fr1-fr2
+        dfrDiff = np.diff(frDiff)
+    
 
+
+        deVals += pl.histogram(dfrDiff,bins=myBins)[0]
+        
+
+        pl.figure(figure)
+        pl.plot(EVals,deVals/N,'k')
+
+#    pl.plot([-60,60],[0,0],'k--')
 
 
 
