@@ -998,7 +998,7 @@ def thresholdTestICUUIDDiff(UUID, thetaList, verbose=1, tOn = 0, FRDelta=.2):
 
 #-------------------------------------------------------------------------------
 
-def thresholdTestSpikesUUID(UUID, thetaList, verbose=1, tOn = 0):
+def thresholdTestSpikesUUID(UUID, thetaList, verbose=1, tOn = 0, namePrefix="InputSel"):
     
     fileName = "thresholdTestSpikes_" + UUID + ".dat"
 
@@ -1011,8 +1011,8 @@ def thresholdTestSpikesUUID(UUID, thetaList, verbose=1, tOn = 0):
         if verbose:
             print "Testing UUID (spikes): " + UUID
         
-        GESel1FileName = findFileName([UUID, ".ntf", "InputSel1"])[0]
-        GESel2FileName = findFileName([UUID, ".ntf", "InputSel2"])[0]
+        GESel1FileName = findFileName([UUID, ".ntf", namePrefix+"1"])[0]
+        GESel2FileName = findFileName([UUID, ".ntf", namePrefix+"2"])[0]
         who1,t1 = doubleListFromFile(GESel1FileName)
         who2,t2 = doubleListFromFile(GESel2FileName)
 
