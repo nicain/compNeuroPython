@@ -2849,7 +2849,7 @@ def meanFRmeanSBGmeanIBG(dir='./', skipT=500, labelList=["0"]):
     for UUID in UUIDList:
         
         for label in labelList:
-            
+            print label
 #            GESel1FRFileName = findFileName([UUID, ".fr", "GESel"+str(i)+"_"])[0]
 #            GESel1SBGSumFileName = findFileName([UUID, ".dat", "GESel"+str(i)+"ISGaba_"])[0]
 #            GESel1IBGSumFileName = findFileName([UUID, ".dat", "GESel"+str(i)+"IBGSum_"])[0]
