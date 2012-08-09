@@ -2855,8 +2855,8 @@ def meanFRmeanSBGmeanIBG(dir='./', skipT=500, labelList=["0"]):
 #            GESel1IBGSumFileName = findFileName([UUID, ".dat", "GESel"+str(i)+"IBGSum_"])[0]
 
 #            GESel1FRFileName = findFileName([UUID, ".fr", "GESel"+str(i)+"_"])[0]
-        GESel1SBGSumFileName = findFileName([UUID, ".dat", "GIShadowS" + label + "_"])[0]
-        GESel1IBGSumFileName = findFileName([UUID, ".dat", "GIShadowI" + label + "_"])[0]
+        GESel1SBGSumFileName = findFileName([".dat", "GIShadowS" + label + "_"])[0]
+        GESel1IBGSumFileName = findFileName([".dat", "GIShadowI" + label + "_"])[0]
         
 #            tFR, FR = doubleListFromFile(GESel1FRFileName, isFloat=True)    
         tS, S = doubleListFromFile(GESel1SBGSumFileName, isFloat=True)
