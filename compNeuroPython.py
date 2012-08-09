@@ -2690,10 +2690,11 @@ def plotSel1Sel2DiffDir(dir="./",  figure=1, what='FR', ICDelta="Inf",N=-1):
         if abs(y[0]) < float(ICDelta):
             print abs(y[0])
             pl.figure(figure)
-            if y[-1]>0:
-                pl.plot(y,yneg,'g')
-            else:  
-                pl.plot(y,yneg,'r')
+#            if y[-1]>0:
+#                pl.plot(y,yneg,'g')
+#            else:  
+#                pl.plot(y,yneg,'r')
+            pl.plot(t,y-yneg)
 
 
     return
@@ -2844,28 +2845,33 @@ def meanFRmeanSBGmeanIBG(dir='./', skipT=500):
     
     UUIDList = getUUIDList(dir=dir)
 
+#    print UUIDList
     for UUID in UUIDList:
         
-        for i in range(1,1+len(findFileName([UUID, ".fr"]))):
+        for i in [0]:
+            
+#            GESel1FRFileName = findFileName([UUID, ".fr", "GESel"+str(i)+"_"])[0]
+#            GESel1SBGSumFileName = findFileName([UUID, ".dat", "GESel"+str(i)+"ISGaba_"])[0]
+#            GESel1IBGSumFileName = findFileName([UUID, ".dat", "GESel"+str(i)+"IBGSum_"])[0]
 
-            GESel1FRFileName = findFileName([UUID, ".fr", "GESel"+str(i)+"_"])[0]
-            GESel1SBGSumFileName = findFileName([UUID, ".dat", "GESel"+str(i)+"SBGSum_"])[0]
-            GESel1IBGSumFileName = findFileName([UUID, ".dat", "GESel"+str(i)+"IBGSum_"])[0]
-
-            tFR, FR = doubleListFromFile(GESel1FRFileName, isFloat=True)    
+#            GESel1FRFileName = findFileName([UUID, ".fr", "GESel"+str(i)+"_"])[0]
+            GESel1SBGSumFileName = findFileName([UUID, ".dat", "GIS_"])[0]
+            GESel1IBGSumFileName = findFileName([UUID, ".dat", "GII_"])[0]
+            
+#            tFR, FR = doubleListFromFile(GESel1FRFileName, isFloat=True)    
             tS, S = doubleListFromFile(GESel1SBGSumFileName, isFloat=True)
             tI, I = doubleListFromFile(GESel1IBGSumFileName, isFloat=True)
 
 
-            FRLi = np.nonzero(np.array(tFR)<=skipT/2)[0][-1] + 1
-            FRRi = np.nonzero(np.array(tFR)<=tFR[-1]-skipT/2)[0][-1] + 1
+#            FRLi = np.nonzero(np.array(tFR)<=skipT/2)[0][-1] + 1
+#            FRRi = np.nonzero(np.array(tFR)<=tFR[-1]-skipT/2)[0][-1] + 1
             SLi = np.nonzero(np.array(tS)<=skipT/2)[0][-1] + 1
             SRi = np.nonzero(np.array(tS)<=tS[-1]-skipT/2)[0][-1] + 1
             ILi = np.nonzero(np.array(tI)<=skipT/2)[0][-1] + 1
             IRi = np.nonzero(np.array(tI)<=tI[-1]-skipT/2)[0][-1] + 1
             
-            FRNew = FR[FRLi:FRRi]
-            tFRNew = tFR[FRLi:FRRi]
+#            FRNew = FR[FRLi:FRRi]
+#            tFRNew = tFR[FRLi:FRRi]
 
             SNew = S[SLi:SRi]
             tSNew = tS[SLi:SRi]
@@ -2873,7 +2879,8 @@ def meanFRmeanSBGmeanIBG(dir='./', skipT=500):
             INew = I[ILi:IRi]
             tINew = tI[ILi:IRi]
             
-            print FRNew.mean(), SNew.mean(), INew.mean()
+#            print FRNew.mean(), FRNew.var(), SNew.mean(), SNew.var(), INew.mean(), INew.var()
+            print SNew.mean(), INew.mean()
 
     return 
 
