@@ -2843,44 +2843,44 @@ def plotFRSel1Sel2SSDiffDir(dir="./",N=-1,figure=1):
 #-------------------------------------------------------------------------------
 def meanFRmeanSBGmeanIBG(dir='./', skipT=500, labelList=["0"]):
     
-    UUIDList = getUUIDList(dir=dir)
-
-#    print UUIDList
-    for UUID in UUIDList:
+#    UUIDList = getUUIDList(dir=dir)
+#
+##    print UUIDList
+#    for UUID in UUIDList:
         
-        for label in labelList:
-            print label
+    for label in labelList:
+        print label
 #            GESel1FRFileName = findFileName([UUID, ".fr", "GESel"+str(i)+"_"])[0]
 #            GESel1SBGSumFileName = findFileName([UUID, ".dat", "GESel"+str(i)+"ISGaba_"])[0]
 #            GESel1IBGSumFileName = findFileName([UUID, ".dat", "GESel"+str(i)+"IBGSum_"])[0]
 
 #            GESel1FRFileName = findFileName([UUID, ".fr", "GESel"+str(i)+"_"])[0]
-            GESel1SBGSumFileName = findFileName([UUID, ".dat", "GIShadowS" + label + "_"])[0]
-            GESel1IBGSumFileName = findFileName([UUID, ".dat", "GIShadowI" + label + "_"])[0]
-            
+        GESel1SBGSumFileName = findFileName([UUID, ".dat", "GIShadowS" + label + "_"])[0]
+        GESel1IBGSumFileName = findFileName([UUID, ".dat", "GIShadowI" + label + "_"])[0]
+        
 #            tFR, FR = doubleListFromFile(GESel1FRFileName, isFloat=True)    
-            tS, S = doubleListFromFile(GESel1SBGSumFileName, isFloat=True)
-            tI, I = doubleListFromFile(GESel1IBGSumFileName, isFloat=True)
+        tS, S = doubleListFromFile(GESel1SBGSumFileName, isFloat=True)
+        tI, I = doubleListFromFile(GESel1IBGSumFileName, isFloat=True)
 
 
 #            FRLi = np.nonzero(np.array(tFR)<=skipT/2)[0][-1] + 1
 #            FRRi = np.nonzero(np.array(tFR)<=tFR[-1]-skipT/2)[0][-1] + 1
-            SLi = np.nonzero(np.array(tS)<=skipT/2)[0][-1] + 1
-            SRi = np.nonzero(np.array(tS)<=tS[-1]-skipT/2)[0][-1] + 1
-            ILi = np.nonzero(np.array(tI)<=skipT/2)[0][-1] + 1
-            IRi = np.nonzero(np.array(tI)<=tI[-1]-skipT/2)[0][-1] + 1
-            
+        SLi = np.nonzero(np.array(tS)<=skipT/2)[0][-1] + 1
+        SRi = np.nonzero(np.array(tS)<=tS[-1]-skipT/2)[0][-1] + 1
+        ILi = np.nonzero(np.array(tI)<=skipT/2)[0][-1] + 1
+        IRi = np.nonzero(np.array(tI)<=tI[-1]-skipT/2)[0][-1] + 1
+        
 #            FRNew = FR[FRLi:FRRi]
 #            tFRNew = tFR[FRLi:FRRi]
 
-            SNew = S[SLi:SRi]
-            tSNew = tS[SLi:SRi]
-            
-            INew = I[ILi:IRi]
-            tINew = tI[ILi:IRi]
-            
+        SNew = S[SLi:SRi]
+        tSNew = tS[SLi:SRi]
+        
+        INew = I[ILi:IRi]
+        tINew = tI[ILi:IRi]
+        
 #            print FRNew.mean(), FRNew.var(), SNew.mean(), SNew.var(), INew.mean(), INew.var()
-            print SNew.mean(), INew.mean()
+        print SNew.mean(), INew.mean()
 
     return 
 
