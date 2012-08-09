@@ -2841,14 +2841,14 @@ def plotFRSel1Sel2SSDiffDir(dir="./",N=-1,figure=1):
 #    pl.hist(endValMinus,20)
 
 #-------------------------------------------------------------------------------
-def meanFRmeanSBGmeanIBG(dir='./', skipT=500, label="0"):
+def meanFRmeanSBGmeanIBG(dir='./', skipT=500, labelList=["0"]):
     
     UUIDList = getUUIDList(dir=dir)
 
 #    print UUIDList
     for UUID in UUIDList:
         
-        for i in [0]:
+        for label in labelList:
             
 #            GESel1FRFileName = findFileName([UUID, ".fr", "GESel"+str(i)+"_"])[0]
 #            GESel1SBGSumFileName = findFileName([UUID, ".dat", "GESel"+str(i)+"ISGaba_"])[0]
