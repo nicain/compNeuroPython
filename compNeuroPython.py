@@ -2841,7 +2841,7 @@ def plotFRSel1Sel2SSDiffDir(dir="./",N=-1,figure=1):
 #    pl.hist(endValMinus,20)
 
 #-------------------------------------------------------------------------------
-def meanFRmeanSBGmeanIBG(dir='./', skipT=500):
+def meanFRmeanSBGmeanIBG(dir='./', skipT=500, label="0"):
     
     UUIDList = getUUIDList(dir=dir)
 
@@ -2855,8 +2855,8 @@ def meanFRmeanSBGmeanIBG(dir='./', skipT=500):
 #            GESel1IBGSumFileName = findFileName([UUID, ".dat", "GESel"+str(i)+"IBGSum_"])[0]
 
 #            GESel1FRFileName = findFileName([UUID, ".fr", "GESel"+str(i)+"_"])[0]
-            GESel1SBGSumFileName = findFileName([UUID, ".dat", "GIShadowS0_"])[0]
-            GESel1IBGSumFileName = findFileName([UUID, ".dat", "GIShadowI0_"])[0]
+            GESel1SBGSumFileName = findFileName([UUID, ".dat", "GIShadowS" + label + "_"])[0]
+            GESel1IBGSumFileName = findFileName([UUID, ".dat", "GIShadowI" + label + "_"])[0]
             
 #            tFR, FR = doubleListFromFile(GESel1FRFileName, isFloat=True)    
             tS, S = doubleListFromFile(GESel1SBGSumFileName, isFloat=True)
