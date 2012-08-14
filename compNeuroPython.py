@@ -2879,7 +2879,7 @@ def meanFRmeanSBGmeanIBG(dir='./', skipT=500, labelList=["0"]):
         tINew = tI[ILi:IRi]
         
 #            print FRNew.mean(), FRNew.var(), SNew.mean(), SNew.var(), INew.mean(), INew.var()
-        print SNew.mean(), INew.mean()
+        print SNew.mean(), INew.mean(), INew.var()
 
     return 
 
